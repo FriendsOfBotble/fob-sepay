@@ -1,0 +1,19 @@
+POST http://iori.test/sepay/webhook
+Authorization: Apikey bca8cef4-8b5f-495e-b2d8-6548151246ff
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id": 92704,
+    "gateway": "Techcombank",
+    "transactionDate": "2023-03-25 14:02:37",
+    "accountNumber": "0123499999",
+    "code": null,
+    "content": "SDH000000002",
+    "transferType": "in",
+    "transferAmount": 845000000,
+    "accumulated": 19077000,
+    "subAccount": null,
+    "referenceCode": "MBVCB.3278907687",
+    "description": ""
+}
