@@ -2,7 +2,6 @@
 
 namespace FriendsOfBotble\SePay\Services\Gateways;
 
-use Botble\Base\Models\BaseModel;
 use Botble\Payment\Enums\PaymentStatusEnum;
 
 class SePayPaymentService
@@ -11,11 +10,7 @@ class SePayPaymentService
     {
         $chargeId = get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME, 'SDH');
 
-        if (BaseModel::getTypeOfId() === 'BIGINT') {
-            $chargeId .= sprintf('%\'.09d', array_reduce($data['order_id'], fn ($carry, $item) => $carry + $item, 0));
-        } else {
-            $chargeId .= sprintf('%\'.09d', (int) microtime(true));
-        }
+        $chargeId .= sprintf('%\'.09d', (int) (microtime(true) * 10));
 
         do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
             'amount' => $data['amount'],

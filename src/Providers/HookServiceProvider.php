@@ -23,7 +23,7 @@ class HookServiceProvider extends ServiceProvider
         add_filter(PAYMENT_METHODS_SETTINGS_PAGE, [$this, 'addPaymentSettings'], 2);
 
         add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
-            if ($payment->payment_channel == PaymentMethodEnum::BANK_TRANSFER && Arr::get($payment->metadata, 'sepay', false)) {
+            if ($payment->payment_channel == SEPAY_PAYMENT_METHOD_NAME && $payment->metadata) {
                 return view('plugins/fob-sepay::detail', compact('payment'));
             }
 

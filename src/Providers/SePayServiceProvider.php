@@ -11,7 +11,7 @@ class SePayServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $this->setNamespace('plugins/sepay');
+        $this->setNamespace('plugins/fob-sepay');
     }
 
     public function boot(): void
@@ -21,7 +21,6 @@ class SePayServiceProvider extends ServiceProvider
         }
 
         $this
-            ->setNamespace('plugins/fob-sepay')
             ->loadRoutes()
             ->loadAndPublishViews()
             ->loadHelpers()

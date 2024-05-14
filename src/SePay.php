@@ -7,18 +7,6 @@ use Illuminate\Support\Arr;
 
 class SePay
 {
-    public static function getTransferDescription(string $orderCode = '[ma_don_hang]'): string
-    {
-        $description = get_payment_setting(
-            'vietnam_bank_transfer_description',
-            PaymentMethodEnum::BANK_TRANSFER,
-        );
-
-        $description = str_replace('[ma_don_hang]', $orderCode, $description);
-
-        return preg_replace('/[^a-zA-Z0-9\s]/si', '', $description);
-    }
-
     public static function getQRCodeUrl(float $amount, string $chargeId): string
     {
         return 'https://qr.sepay.vn/img?' . http_build_query([
