@@ -1,0 +1,1 @@
+$((function(){$(document).on("click",'[data-bb-toggle="sepay-webhook-secret"]',(function(t){t.preventDefault();var e=$("#sepay-webhook-secret"),a=$(t.currentTarget);$httpClient.make().withButtonLoading(t.currentTarget).post(a.data("url")).then((function(t){var a=t.data;e.val(a.data.secret)}))}))}));
