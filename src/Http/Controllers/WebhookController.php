@@ -3,6 +3,8 @@
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\Ecommerce\Facades\OrderHelper;
+use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
 use FriendsOfBotble\SePay\SePay;
@@ -12,6 +14,7 @@ class WebhookController
 {
     public function __invoke(Request $request): BaseHttpResponse
     {
+
         if (
             ! $request->filled('id')
             || ! $request->date('transactionDate')
@@ -25,6 +28,12 @@ class WebhookController
         }
 
         $chargeId = SePay::getChargeIdFrom($transferContent);
+
+        if (! $chargeId || ! is_string($chargeId)) {
+            return BaseHttpResponse::make()
+                ->setError()
+                ->setMessage('charge id invalid.');
+        }
 
         $payment = Payment::query()->where('charge_id', $chargeId)->first();
 
@@ -44,6 +53,11 @@ class WebhookController
             'charge_id' => $payment->charge_id,
             'order_id' => $payment->order_id,
         ]);
+
+        /** @var \Botble\Ecommerce\Models\Order|null $order */
+        if ($order = Order::query()->find($payment->order_id)) {
+            OrderHelper::confirmOrder($order);
+        }
 
         return BaseHttpResponse::make()->setMessage('received.');
     }
