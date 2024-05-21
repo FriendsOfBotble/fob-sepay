@@ -9,10 +9,11 @@ use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
 use FriendsOfBotble\SePay\SePay;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class WebhookController
 {
-    public function __invoke(Request $request): BaseHttpResponse
+    public function __invoke(Request $request): Response
     {
 
         if (
@@ -22,17 +23,13 @@ class WebhookController
             || ! ($transferContent = $request->input('content'))
             || ! ($transferAmount = $request->float('transferAmount'))
         ) {
-            return BaseHttpResponse::make()
-                ->setError()
-                ->setMessage('transaction invalid.');
+            return response('invalid payload.', 400);
         }
 
         $chargeId = SePay::getChargeIdFrom($transferContent);
 
         if (! $chargeId || ! is_string($chargeId)) {
-            return BaseHttpResponse::make()
-                ->setError()
-                ->setMessage('charge id invalid.');
+            return response('invalid payload.', 400);
         }
 
         $payment = Payment::query()->where('charge_id', $chargeId)->first();
@@ -40,13 +37,11 @@ class WebhookController
         if (! $payment
             || $payment->payment_channel->getValue() !== SEPAY_PAYMENT_METHOD_NAME
             || $transferAmount < $payment->amount) {
-            return BaseHttpResponse::make()
-                ->setError()
-                ->setMessage('order invalid.');
+            return response('invalid payload.', 400);
         }
 
         if ($payment->status == PaymentStatusEnum::COMPLETED) {
-            return BaseHttpResponse::make()->setMessage('received.');
+            return response('ok');
         }
 
         $payment->status = PaymentStatusEnum::COMPLETED;
@@ -63,6 +58,6 @@ class WebhookController
             OrderHelper::confirmOrder($order);
         }
 
-        return BaseHttpResponse::make()->setMessage('received.');
+        return response('ok');
     }
 }
