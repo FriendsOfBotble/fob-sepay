@@ -45,6 +45,10 @@ class WebhookController
                 ->setMessage('order invalid.');
         }
 
+        if ($payment->status == PaymentStatusEnum::COMPLETED) {
+            return BaseHttpResponse::make()->setMessage('received.');
+        }
+
         $payment->status = PaymentStatusEnum::COMPLETED;
         $payment->metadata = $request->input();
         $payment->save();
