@@ -104,7 +104,7 @@
                 </div>
 
                 <div class="transaction-status text-center" data-bb-toggle="sepay-transaction-status" data-url="{{ route('sepay.transactions.check') }}" data-charge-id="{{ $chargeId }}">
-                    Trạng thái chờ thanh toán <img src="{{ url('vendor/core/plugins/sepay/images/loading.gif') }}" width="20" height="20" alt="Loading">
+                    Trạng thái chờ thanh toán <img src="{{ url('vendor/core/plugins/fob-sepay/images/loading.gif') }}" width="20" height="20" alt="Loading">
                 </div>
             </div>
         </div>
