@@ -51,6 +51,7 @@ class WebhookController
         do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
             'charge_id' => $payment->charge_id,
             'order_id' => $payment->order_id,
+            'status' => PaymentStatusEnum::COMPLETED,
         ]);
 
         /** @var \Botble\Ecommerce\Models\Order|null $order */
