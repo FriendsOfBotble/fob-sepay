@@ -2,7 +2,6 @@
 
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
-use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Ecommerce\Facades\OrderHelper;
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentStatusEnum;
@@ -15,7 +14,6 @@ class WebhookController
 {
     public function __invoke(Request $request): Response
     {
-
         if (
             ! $request->filled('id')
             || ! $request->date('transactionDate')
@@ -54,8 +52,12 @@ class WebhookController
             'status' => PaymentStatusEnum::COMPLETED,
         ]);
 
-        /** @var \Botble\Ecommerce\Models\Order|null $order */
-        if ($order = Order::query()->find($payment->order_id)) {
+        /**
+         * @var Order|null $order
+         */
+        $order = Order::query()->find($payment->order_id);
+
+        if ($order) {
             OrderHelper::confirmOrder($order);
         }
 
