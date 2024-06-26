@@ -1,4 +1,8 @@
 <style>
+    .sepay.fob-container {
+        margin-top: 2rem;
+    }
+
     .sepay .fob-qr-code {
         text-align: center;
         margin-bottom: 40px;
@@ -23,7 +27,9 @@
     }
 
     .sepay .transaction-status-done {
-        margin-top: 2rem;
+        background-color: var(--bs-tertiary-bg);
+        border: none;
+        color: var(--primary-color);
     }
 
     .sepay .transaction-status-done .icon {
@@ -115,9 +121,9 @@
         <div class="transaction-status-done card text-center pb-3 pt-2">
             <div class="p-4">
                 <div class="mb-2">
-                    <x-core::icon class="text-success" name="ti ti-circle-check"/>
+                    <x-core::icon name="ti ti-circle-check"/>
                 </div>
-                <h4 class="text-success">Thanh toán thành công</h4>
+                <h4>Thanh toán thành công</h4>
             </div>
         </div>
     </div>
@@ -156,9 +162,15 @@
                 charge_id: elm.data('charge-id')
             },
             success: ({ data }) => {
-                if(data.value === 'completed') {
+                if (data.status.value === 'completed') {
                     $('#sepay-transaction-status-done').show()
                     $('#sepay-bank-info').remove()
+
+                    let paymentStatusElement = $(document).find('span[data-bb-target="ecommerce-order-payment-status"]');
+
+                    if (paymentStatusElement.length && data.status_html) {
+                        paymentStatusElement.html(data.status_html);
+                    }
 
                     clearInterval(interval)
                 }

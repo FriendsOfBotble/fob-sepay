@@ -17,6 +17,9 @@ class TransactionCheckerController extends BaseController
 
         return $this
             ->httpResponse()
-            ->setData($payment->status);
+            ->setData([
+                'status' => $payment->status,
+                'status_html' => $payment->status->toHtml(),
+            ]);
     }
 }

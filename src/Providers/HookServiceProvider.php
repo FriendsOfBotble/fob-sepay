@@ -2,7 +2,6 @@
 
 namespace FriendsOfBotble\SePay\Providers;
 
-use Botble\Ecommerce\Models\Currency;
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Facades\PaymentMethods;
@@ -10,7 +9,6 @@ use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
 use FriendsOfBotble\SePay\SePay;
 use FriendsOfBotble\SePay\Services\Gateways\SePayPaymentService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 
