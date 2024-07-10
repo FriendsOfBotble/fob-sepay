@@ -90,6 +90,11 @@ class HookServiceProvider extends ServiceProvider
 
     public function registerSePayMethod(?string $html, array $data): ?string
     {
+        // Support old versions
+        if (! view()->exists('plugins/ecommerce::components.fronts.checkout.payment-method')) {
+            return $html . view('plugins/fob-sepay::support-old-versions.payment-method', $data)->render();
+        }
+
         PaymentMethods::method(SEPAY_PAYMENT_METHOD_NAME, [
             'html' => view('plugins/fob-sepay::payments.methods', $data)->render(),
         ]);
