@@ -13,12 +13,12 @@
         value="{{ $name }}"
         @checked($isSelected)
     >
-    <label for="{{ $id }}">
+    <label for="{{ $id }}" class="form-label fw-medium">
         {{ get_payment_setting('name', $name, trans('plugins/payment::payment.payment_via_card')) }}
     </label>
 
     <div @class(['payment_collapse_wrap collapse mt-1', 'show' => $isSelected])>
-        <p>{!! BaseHelper::clean(get_payment_setting('description', $name)) !!}</p>
+        <p class="text-muted">{!! BaseHelper::clean(get_payment_setting('description', $name)) !!}</p>
 
         @if (! empty($supportedCurrencies) && ! in_array(get_application_currency()->title, $supportedCurrencies) && ! get_application_currency()->replicate()->newQuery()->whereIn('title', $supportedCurrencies)->exists())
             @php
