@@ -5,7 +5,7 @@
     "provider": "FriendsOfBotble\\SePay\\Providers\\SePayServiceProvider",
     "author": "Friends Of Botble",
     "url": "https://friendsofbotble.com",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "description": "Tích hợp SePay vào Botble CMS",
     "minimum_core_version": "7.0.5"
 }
