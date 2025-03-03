@@ -7,6 +7,7 @@ use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Facades\PaymentMethods;
 use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
 use FriendsOfBotble\SePay\SePay;
+use FriendsOfBotble\SePay\SePayClient;
 use FriendsOfBotble\SePay\Services\Gateways\SePayPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -92,15 +93,37 @@ class HookServiceProvider extends ServiceProvider
             }
 
             $chargeId = $payment->charge_id;
+            $bank = SePay::getBankById(get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME));
+            $bankAccountNumber = get_payment_setting('account_number', SEPAY_PAYMENT_METHOD_NAME);
+            $bankAccountHolder = get_payment_setting('account_holder', SEPAY_PAYMENT_METHOD_NAME);
+
+            $client = new SePayClient();
+
+            if ($client->isConnected()) {
+                $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
+
+                $bank = "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})";
+                $bankAccountNumber = $bankAccount->account_number;
+                $bankAccountHolder = $bankAccount->account_holder_name;
+
+                if ($bankSubAccountId = get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
+                    $bankSubAccounts = $client->bankSubAccounts($bankAccount->id);
+
+                    $bankSubAccount = collect($bankSubAccounts)->firstWhere('id', $bankSubAccountId);
+
+                    $bankAccountNumber = $bankSubAccount['account_number'];
+                    $bankAccountHolder = $bankSubAccount['account_holder_name'];
+                }
+            }
 
             $html .= view(
                 'plugins/fob-sepay::bank-info',
                 [
                     'orderAmount' => $orderAmount,
                     'imageUrl' => SePay::getQRCodeUrl($orderAmount, $chargeId),
-                    'bank' => SePay::getBankById(get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME)),
-                    'bankAccountNumber' => get_payment_setting('account_number', SEPAY_PAYMENT_METHOD_NAME),
-                    'bankAccountHolder' => get_payment_setting('account_holder', SEPAY_PAYMENT_METHOD_NAME),
+                    'bank' => $bank,
+                    'bankAccountNumber' => $bankAccountNumber,
+                    'bankAccountHolder' => $bankAccountHolder,
                     'chargeId' => $chargeId,
                     'payment' => $payment,
                 ]

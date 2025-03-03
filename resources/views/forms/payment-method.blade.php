@@ -41,10 +41,10 @@
                             </div>
                         </div>
 
-                        <x-core::button @class(['toggle-payment-item edit-payment-item-btn-trigger', 'hidden' => !$status])>
+                        <x-core::button @class(['toggle-payment-item edit-payment-item-btn-trigger', 'hidden' => !$status]) data-value="sepay">
                             {{ trans('plugins/payment::payment.edit') }}
                         </x-core::button>
-                        <x-core::button @class(['toggle-payment-item save-payment-item-btn-trigger', 'hidden' => $status])>
+                        <x-core::button @class(['toggle-payment-item save-payment-item-btn-trigger', 'hidden' => $status]) data-value="sepay">
                             {{ trans('plugins/payment::payment.settings') }}
                         </x-core::button>
                     </div>
@@ -56,7 +56,11 @@
                         @php
                             $profile = $sepayClient->profile();
                         @endphp
-                        <div class="sepay-connected-profile bg-body p-3 rounded mb-3">
+                        <div
+                            class="sepay-connected-profile bg-body p-3 rounded mb-3"
+                            data-get-bank-sub-accounts-url="{{ route('sepay.bank-sub-accounts') }}"
+                            data-bank-sub-account-id="{{ get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME) }}"
+                        >
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                 <span class="avatar avatar-lg" style="background-image: url({{ $profile->avatar }});"></span>
                                 <div>
@@ -106,7 +110,6 @@
                                         },
                                         success: function(response) {
                                             if (response.data.success) {
-                                                alert('Disconnected successfully.');
                                                 location.reload();
                                             } else {
                                                 alert('An error occurred. Please try again.');

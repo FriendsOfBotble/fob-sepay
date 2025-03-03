@@ -34,6 +34,13 @@ class SePayClient
         });
     }
 
+    public function bankAccount($id): ?object
+    {
+        return Cache::remember("sepay.bank-account.$id", 60 * 60, function () use ($id) {
+            return (object) $this->request('get', "bank-accounts/$id");
+        });
+    }
+
     public function bankSubAccounts(int $bankAccountId)
     {
         return Cache::remember("sepay.bank-sub-accounts.$bankAccountId", 60 * 60, function () use ($bankAccountId) {

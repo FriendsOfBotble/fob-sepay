@@ -2,6 +2,7 @@
 
 namespace FriendsOfBotble\SePay\Forms;
 
+use Botble\Base\Facades\Assets;
 use Botble\Base\Forms\FieldOptions\SelectFieldOption;
 use Botble\Base\Forms\Fields\SelectField;
 use Botble\Payment\Forms\PaymentMethodForm;
@@ -12,6 +13,8 @@ class SePayPaymentMethodForm extends PaymentMethodForm
 {
     public function setup(): void
     {
+        Assets::addScriptsDirectly('vendor/core/plugins/fob-sepay/js/settings.js');
+
         $client = new SePayClient();
 
         $this
@@ -34,15 +37,13 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         $item['prefix'] => $item['prefix'],
                     ])->all();
 
-                $bankAccountId = get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME);
+                $bankSubAccounts = [];
 
-                if ($bankAccountId) {
-                    $bankSubAccounts = collect($client->bankSubAccounts($bankAccountId))
+                if ($bankAccountId = get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
+                    $bankSubAccounts += collect($client->bankSubAccounts($bankAccountId))
                         ->mapWithKeys(fn($item) => [
                             $item['id'] => "{$item['account_number']}" . ($item['account_holder_name'] ? " - {$item['account_holder_name']}" : ''),
                         ])->all();
-                } else {
-                    $bankSubAccounts = [];
                 }
 
                 $form
@@ -52,7 +53,6 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         SelectFieldOption::make()
                             ->searchable()
                             ->choices($bankAccounts)
-                            ->selected(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME))
                             ->label('Tài khoản ngân hàng')
                     )
                     ->add(
@@ -60,10 +60,7 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         SelectField::class,
                         SelectFieldOption::make()
                             ->searchable()
-                            ->choices(empty($bankSubAccounts) ? [
-                                '' => '-- Chọn tài khoản ảo --',
-                            ] : $bankSubAccounts)
-                            ->selected(get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME))
+                            ->wrapperAttributes(['style' => 'display: none'])
                             ->label('Tài khoản ảo')
                     )
                     ->add(
@@ -71,7 +68,6 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         SelectField::class,
                         SelectFieldOption::make()
                             ->choices($paymentCodePrefixes)
-                            ->selected(get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME, 'SDH'))
                             ->label('Tiền tố mã thanh toán')
                     );
             });

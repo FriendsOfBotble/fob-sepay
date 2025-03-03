@@ -1,0 +1,51 @@
+<?php
+
+namespace FriendsOfBotble\SePay\Http\Controllers;
+
+use Botble\Base\Http\Controllers\BaseController;
+use Botble\Base\Http\Responses\BaseHttpResponse;
+use Exception;
+use FriendsOfBotble\SePay\SePayClient;
+use Illuminate\Http\Request;
+
+class SePayController extends BaseController
+{
+    public function __construct(protected SePayClient $client) {}
+
+    public function bankSubAccounts(Request $request): BaseHttpResponse
+    {
+        $request->validate([
+            'bank_account_id' => ['required', 'string'],
+        ]);
+
+        try {
+            $bankSubAccounts = collect($this->client->bankSubAccounts($request->input('bank_account_id')))
+                ->mapWithKeys(fn($item) => [
+                    $item['id'] => "{$item['account_number']}" . ($item['account_holder_name'] ? " - {$item['account_holder_name']}" : ''),
+                ])->all();
+
+            return $this
+                ->httpResponse()
+                ->setData($bankSubAccounts);
+        } catch (Exception $e) {
+            return $this
+                ->httpResponse()
+                ->setError()
+                ->setMessage($e->getMessage());
+        }
+    }
+
+    public function paymentCodes(): BaseHttpResponse
+    {
+        try {
+            return $this
+                ->httpResponse()
+                ->setData($this->client->company()->configurations['payment_code_formats']);
+        } catch (Exception $e) {
+            return $this
+                ->httpResponse()
+                ->setError()
+                ->setMessage($e->getMessage());
+        }
+    }
+}
