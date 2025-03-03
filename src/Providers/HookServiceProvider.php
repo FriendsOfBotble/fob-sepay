@@ -5,6 +5,7 @@ namespace FriendsOfBotble\SePay\Providers;
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Facades\PaymentMethods;
+use Botble\Payment\Http\Requests\PaymentMethodRequest;
 use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
 use FriendsOfBotble\SePay\SePay;
 use FriendsOfBotble\SePay\SePayClient;
@@ -12,6 +13,7 @@ use FriendsOfBotble\SePay\Services\Gateways\SePayPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rule;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -131,5 +133,20 @@ class HookServiceProvider extends ServiceProvider
 
             return $html;
         }, 9999, 2);
+
+        add_filter('core_request_rules', function (array $rules, Request $request) {
+            if ($request instanceof PaymentMethodRequest) {
+                $client = new SePayClient();
+
+                $rules = [
+                    ...$rules,
+                    'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($client->bankAccounts(), 'id'))],
+                    'payment_sepay_bank_sub_account_id' => ['nullable', 'string', Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id'))],
+                    'payment_sepay_prefix' => ['required', 'string', Rule::in(array_column($client->company()->configurations['payment_code_formats'], 'prefix'))],
+                ];
+            }
+
+            return $rules;
+        }, 999, 2);
     }
 }

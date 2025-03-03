@@ -48,6 +48,11 @@ class SePayClient
         });
     }
 
+    public function createWebhook(array $data): array
+    {
+        return $this->request('post', 'webhooks', $data);
+    }
+
     public function request(string $method, string $url, array $data = []): array
     {
         $response = Http::baseUrl('https://my.sepay.vn/api/v1')

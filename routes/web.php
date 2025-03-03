@@ -5,7 +5,6 @@ use FriendsOfBotble\SePay\Http\Controllers\OAuthController;
 use FriendsOfBotble\SePay\Http\Controllers\SePayController;
 use FriendsOfBotble\SePay\Http\Middleware\SePayProtector;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('sepay/oauth/connect', [OAuthController::class, 'connect'])->name('sepay.oauth.connect');
@@ -30,10 +29,12 @@ Route::post('sepay/transactions/check', [
 
 Route::group(['namespace' => 'FriendsOfBotble\SePay\Http\Controllers'], function () {
     AdminHelper::registerRoutes(function () {
-        Route::get('sepay/bank-sub-accounts', [SePayController::class, 'bankSubAccounts'])
-            ->name('sepay.bank-sub-accounts');
+        Route::prefix('sepay')->name('sepay.')->group(function () {
+            Route::get('bank-sub-accounts', [SePayController::class, 'bankSubAccounts'])
+                ->name('bank-sub-accounts');
 
-        Route::get('sepay/payment-codes', [SePayController::class, 'paymentCodes'])
-            ->name('sepay.payment-codes');
+            Route::get('payment-codes', [SePayController::class, 'paymentCodes'])
+                ->name('payment-codes');
+        });
     });
 });

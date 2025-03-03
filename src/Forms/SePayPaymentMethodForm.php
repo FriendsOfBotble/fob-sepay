@@ -37,15 +37,6 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         $item['prefix'] => $item['prefix'],
                     ])->all();
 
-                $bankSubAccounts = [];
-
-                if ($bankAccountId = get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
-                    $bankSubAccounts += collect($client->bankSubAccounts($bankAccountId))
-                        ->mapWithKeys(fn($item) => [
-                            $item['id'] => "{$item['account_number']}" . ($item['account_holder_name'] ? " - {$item['account_holder_name']}" : ''),
-                        ])->all();
-                }
-
                 $form
                     ->add(
                         get_payment_setting_key('bank_account_id', SEPAY_PAYMENT_METHOD_NAME),
