@@ -16,9 +16,21 @@ class HookServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        add_filter(PAYMENT_FILTER_ADDITIONAL_PAYMENT_METHODS, [$this, 'registerSePayMethod'], 2, 2);
+        add_filter(PAYMENT_FILTER_ADDITIONAL_PAYMENT_METHODS, function (?string $html, array $data): ?string {
+            if (! view()->exists('plugins/payment::components.payment-method')) {
+                return $html . view('plugins/fob-sepay::support-old-versions.payment-method', $data)->render();
+            }
 
-        add_filter(PAYMENT_METHODS_SETTINGS_PAGE, [$this, 'addPaymentSettings'], 2);
+            PaymentMethods::method(SEPAY_PAYMENT_METHOD_NAME, [
+                'html' => view('plugins/fob-sepay::payments.methods', $data)->render(),
+            ]);
+
+            return $html;
+        }, 999, 2);
+
+        add_filter(PAYMENT_METHODS_SETTINGS_PAGE, function (?string $settings): string {
+            return $settings . SePayPaymentMethodForm::create()->renderForm();
+        }, 999);
 
         add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
             if ($payment->payment_channel == SEPAY_PAYMENT_METHOD_NAME && $payment->metadata) {
@@ -26,7 +38,7 @@ class HookServiceProvider extends ServiceProvider
             }
 
             return $data;
-        }, 20, 2);
+        }, 999, 2);
 
         add_filter(BASE_FILTER_ENUM_ARRAY, function ($values, $class) {
             if ($class == PaymentMethodEnum::class) {
@@ -34,7 +46,7 @@ class HookServiceProvider extends ServiceProvider
             }
 
             return $values;
-        }, 2, 2);
+        }, 999, 2);
 
         add_filter(BASE_FILTER_ENUM_LABEL, function ($value, $class) {
             if ($class == PaymentMethodEnum::class && $value == SEPAY_PAYMENT_METHOD_NAME) {
@@ -42,9 +54,19 @@ class HookServiceProvider extends ServiceProvider
             }
 
             return $value;
-        }, 2, 2);
+        }, 999, 2);
 
-        add_filter(PAYMENT_FILTER_AFTER_POST_CHECKOUT, [$this, 'checkoutWithSePay'], 11, 2);
+        add_filter(PAYMENT_FILTER_AFTER_POST_CHECKOUT, function (array $data, Request $request): array {
+            if ($data['type'] !== SEPAY_PAYMENT_METHOD_NAME) {
+                return $data;
+            }
+
+            $paymentData = apply_filters(PAYMENT_FILTER_PAYMENT_DATA, [], $request);
+
+            $data['charge_id'] = (new SePayPaymentService())->execute($paymentData);
+
+            return $data;
+        }, 999, 2);
 
         add_filter('ecommerce_thank_you_customer_info', function (?string $html, Collection|Order $orders) {
             if (! $orders instanceof Collection) {
@@ -86,37 +108,5 @@ class HookServiceProvider extends ServiceProvider
 
             return $html;
         }, 9999, 2);
-    }
-
-    public function registerSePayMethod(?string $html, array $data): ?string
-    {
-        // Support old versions
-        if (! view()->exists('plugins/payment::components.payment-method')) {
-            return $html . view('plugins/fob-sepay::support-old-versions.payment-method', $data)->render();
-        }
-
-        PaymentMethods::method(SEPAY_PAYMENT_METHOD_NAME, [
-            'html' => view('plugins/fob-sepay::payments.methods', $data)->render(),
-        ]);
-
-        return $html;
-    }
-
-    public function addPaymentSettings(?string $settings): string
-    {
-        return $settings . SePayPaymentMethodForm::create()->renderForm();
-    }
-
-    public function checkoutWithSePay(array $data, Request $request): array
-    {
-        if ($data['type'] !== SEPAY_PAYMENT_METHOD_NAME) {
-            return $data;
-        }
-
-        $paymentData = apply_filters(PAYMENT_FILTER_PAYMENT_DATA, [], $request);
-
-        $data['charge_id'] = (new SePayPaymentService())->execute($paymentData);
-
-        return $data;
     }
 }

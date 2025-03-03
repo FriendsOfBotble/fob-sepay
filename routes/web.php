@@ -1,8 +1,19 @@
 <?php
 
 use Botble\Base\Facades\AdminHelper;
+use FriendsOfBotble\SePay\Http\Controllers\OAuthController;
 use FriendsOfBotble\SePay\Http\Middleware\SePayProtector;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
+
+Route::get('sepay/oauth/connect', [OAuthController::class, 'connect'])->name('sepay.oauth.connect');
+
+Route::get('sepay/oauth/callback', [OAuthController::class, 'getCallback'])
+    ->name('sepay.oauth.callback');
+Route::post('sepay/oauth/callback', [OAuthController::class, 'callback'])
+    ->withoutMiddleware(VerifyCsrfToken::class);
+Route::post('sepay/oauth/disconnect', [OAuthController::class, 'disconnect'])
+    ->name('sepay.oauth.disconnect');
 
 Route::post('sepay/webhook', [
     'uses' => 'FriendsOfBotble\SePay\Http\Controllers\WebhookController@__invoke',

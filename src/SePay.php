@@ -2,7 +2,6 @@
 
 namespace FriendsOfBotble\SePay;
 
-use Botble\Payment\Enums\PaymentMethodEnum;
 use Illuminate\Support\Arr;
 
 class SePay
