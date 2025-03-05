@@ -38,6 +38,8 @@ class WebhookController
             return response('invalid payload.', 400);
         }
 
+        do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
+
         if ($payment->status == PaymentStatusEnum::COMPLETED) {
             return response('ok');
         }
@@ -60,6 +62,8 @@ class WebhookController
         if ($order) {
             OrderHelper::confirmOrder($order);
         }
+
+        do_action('payment_after_api_response', SEPAY_PAYMENT_METHOD_NAME, [], $request->all());
 
         return response('ok');
     }
