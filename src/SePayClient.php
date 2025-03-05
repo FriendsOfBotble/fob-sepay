@@ -53,11 +53,15 @@ class SePayClient
 
     public function createWebhook(array $data): array
     {
+        $apiKey = base64_encode(random_bytes(32));
+
+        setting()->set('sepay_api_key', $apiKey)->save();
+
         return $this->request('post', 'webhooks', [
             'name' => sprintf('FOB SePay %s', config('app.url')),
             'event_type' => 'In_only',
             'authen_type' => 'Api_Key',
-            'api_key' => base64_encode(random_bytes(32)),
+            'api_key' => $apiKey,
             // 'webhook_url' => route('sepay.webhook'),
             'webhook_url' => 'https://shofy.botble.com/sepay/webhook',
             'is_verify_payment' => true,

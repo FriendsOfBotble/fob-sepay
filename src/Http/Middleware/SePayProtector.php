@@ -5,25 +5,36 @@ namespace FriendsOfBotble\SePay\Http\Middleware;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class SePayProtector
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $apiKey = $request->header('Authorization');
-        $apiKey = ! empty($apiKey) ? Str::after($apiKey, 'Apikey ') : false;
-        $hashedKey = get_payment_setting('webhook_secret', SEPAY_PAYMENT_METHOD_NAME);
+        $apiKey = $this->apiToken($request);
+        $storedApiKey = setting('sepay_api_key');
 
-        if (! $apiKey || ! Hash::check($apiKey, $hashedKey)) {
-            return new JsonResponse([
-                'success' => 'false',
-                'message' => 'api key invalid.',
-            ], Response::HTTP_FORBIDDEN);
+        if (
+            ! $apiKey
+            || ! $storedApiKey
+            || ! hash_equals($storedApiKey, $apiKey)
+        ) {
+            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_UNAUTHORIZED);
         }
 
         return $next($request);
+    }
+
+    public function apiToken(Request $request): string
+    {
+        $header = $request->header('Authorization', '');
+
+        if (! str_contains($header, 'Apikey ')) {
+            return false;
+        }
+
+        $apiKey = str_replace('Apikey ', '', $header);
+
+        return trim($apiKey);
     }
 }

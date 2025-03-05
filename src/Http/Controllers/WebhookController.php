@@ -2,65 +2,45 @@
 
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
-use Botble\Ecommerce\Facades\OrderHelper;
-use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
-use FriendsOfBotble\SePay\SePay;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use FriendsOfBotble\SePay\Http\Requests\WebhookRequest;
+use Illuminate\Http\JsonResponse;
 
 class WebhookController
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(WebhookRequest $request): JsonResponse
     {
-        if (
-            ! $request->filled('id')
-            || ! $request->date('transactionDate')
-            || $request->input('transferType') !== 'in'
-            || ! ($transferContent = $request->input('content'))
-            || ! ($transferAmount = $request->float('transferAmount'))
-        ) {
-            return response('invalid payload.', 400);
-        }
+        do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
 
-        $chargeId = SePay::getChargeIdFrom($transferContent);
+        $payment = Payment::query()
+            ->where('charge_id', $request->input('code'))
+            ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
+            ->where('amount', $request->input('transferAmount'))
+            ->first();
 
-        if (! $chargeId || ! is_string($chargeId)) {
-            return response('invalid payload.', 400);
-        }
-
-        $payment = Payment::query()->where('charge_id', $chargeId)->first();
-
-        if (! $payment
-            || $payment->payment_channel->getValue() !== SEPAY_PAYMENT_METHOD_NAME
-            || $transferAmount < $payment->amount) {
-            return response('invalid payload.', 400);
+        if (! $payment) {
+            return response()->json(['success' => false]);
         }
 
         if ($payment->status == PaymentStatusEnum::COMPLETED) {
-            return response('ok');
+            return response()->json(['success' => true]);
         }
 
-        $payment->status = PaymentStatusEnum::COMPLETED;
-        $payment->metadata = $request->input();
-        $payment->save();
+        $payment->update([
+            'status' => PaymentStatusEnum::COMPLETED,
+            'metadata' => $request->input(),
+        ]);
 
         do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
             'charge_id' => $payment->charge_id,
             'order_id' => $payment->order_id,
             'status' => PaymentStatusEnum::COMPLETED,
-        ]);
+            'amount' => $payment->amount,
+        ], $request);
 
-        /**
-         * @var Order|null $order
-         */
-        $order = Order::query()->find($payment->order_id);
+        do_action('payment_after_api_response', SEPAY_PAYMENT_METHOD_NAME, [], $request->all());
 
-        if ($order) {
-            OrderHelper::confirmOrder($order);
-        }
-
-        return response('ok');
+        return response()->json(['success' => true]);
     }
 }

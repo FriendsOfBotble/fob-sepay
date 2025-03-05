@@ -4,6 +4,8 @@ namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\Payment\Enums\PaymentStatusEnum;
+use Botble\Payment\Models\Payment;
 use Exception;
 use FriendsOfBotble\SePay\SePayClient;
 use Illuminate\Http\Request;
@@ -49,5 +51,20 @@ class SePayController extends BaseController
                 ->setError()
                 ->setMessage($e->getMessage());
         }
+    }
+
+    public function checkTransaction(string $chargeId): BaseHttpResponse
+    {
+        $payment = Payment::query()
+            ->where('charge_id', $chargeId)
+            ->whereIn('status', [PaymentStatusEnum::PENDING, PaymentStatusEnum::COMPLETED])
+            ->firstOrFail();
+
+        return $this
+            ->httpResponse()
+            ->setData([
+                'status' => $payment->status,
+                'status_html' => $payment->status->toHtml(),
+            ]);
     }
 }

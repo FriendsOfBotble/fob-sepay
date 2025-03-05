@@ -6,7 +6,6 @@ use Botble\Base\Facades\Assets;
 use Botble\Base\Forms\FieldOptions\SelectFieldOption;
 use Botble\Base\Forms\Fields\SelectField;
 use Botble\Payment\Forms\PaymentMethodForm;
-use FriendsOfBotble\SePay\Http\Requests\PaymentRequest;
 use FriendsOfBotble\SePay\SePayClient;
 
 class SePayPaymentMethodForm extends PaymentMethodForm
@@ -19,7 +18,6 @@ class SePayPaymentMethodForm extends PaymentMethodForm
 
         $this
             ->template('plugins/fob-sepay::forms.payment-method')
-            ->setValidatorClass(PaymentRequest::class)
             ->paymentId(SEPAY_PAYMENT_METHOD_NAME)
             ->paymentName('SePay')
             ->paymentDescription('Thanh toán chuyển khoản ngân hàng với QR Code. Tự động xác nhận thanh toán bởi SePay.')
@@ -38,6 +36,7 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         SelectFieldOption::make()
                             ->searchable()
                             ->choices($bankAccounts)
+                            ->selected(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME))
                             ->label('Tài khoản ngân hàng')
                     )
                     ->add(

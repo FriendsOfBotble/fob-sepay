@@ -3,7 +3,6 @@
 use Botble\Base\Facades\AdminHelper;
 use FriendsOfBotble\SePay\Http\Controllers\OAuthController;
 use FriendsOfBotble\SePay\Http\Controllers\SePayController;
-use FriendsOfBotble\SePay\Http\Controllers\TransactionCheckerController;
 use FriendsOfBotble\SePay\Http\Controllers\WebhookController;
 use FriendsOfBotble\SePay\Http\Middleware\SePayProtector;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -25,7 +24,7 @@ Route::prefix('sepay')->name('sepay.')->group(function () {
         ->name('webhook')
         ->middleware(SePayProtector::class);
 
-    Route::post('transactions/check', [TransactionCheckerController::class, '__invoke'])
+    Route::post('transactions/check', [SePayController::class, 'checkTransaction'])
         ->name('transactions.check');
 
     AdminHelper::registerRoutes(function () {
