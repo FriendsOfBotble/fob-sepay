@@ -64,6 +64,7 @@ class OAuthController extends BaseController
             'sepay_refresh_token' => null,
             'sepay_expired_at' => null,
             'sepay_connected_at' => null,
+            'sepay_webhook_id' => null,
         ])->save();
 
         Cache::forget('sepay.profile');

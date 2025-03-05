@@ -20,11 +20,9 @@ class SePayClient
         });
     }
 
-    public function company(): ?object
+    public function company(): ?array
     {
-        return Cache::remember('sepay.company', 60 * 60, function () {
-            return (object) $this->request('get', 'company');
-        });
+        return $this->request('get', 'company');
     }
 
     public function bankAccounts(): array
@@ -48,9 +46,29 @@ class SePayClient
         });
     }
 
+    public function webhook(int $id): ?array
+    {
+        return $this->request('get', "webhooks/$id");
+    }
+
     public function createWebhook(array $data): array
     {
-        return $this->request('post', 'webhooks', $data);
+        return $this->request('post', 'webhooks', [
+            'name' => sprintf('FOB SePay %s', config('app.url')),
+            'event_type' => 'In_only',
+            'authen_type' => 'Api_Key',
+            'api_key' => base64_encode(random_bytes(32)),
+            // 'webhook_url' => route('sepay.webhook'),
+            'webhook_url' => 'https://shofy.botble.com/sepay/webhook',
+            'is_verify_payment' => true,
+            'request_content_type' => 'Json',
+            ...$data,
+        ]);
+    }
+
+    public function updateWebhook(int $id, array $data): array
+    {
+        return $this->request('patch', "webhooks/$id", $data);
     }
 
     public function request(string $method, string $url, array $data = []): array
@@ -70,7 +88,7 @@ class SePayClient
         $data = $response->json();
 
         if (isset($data['status']) && $data['status'] !== 'success') {
-            throw new Exception($data['message'] ?? $data['messages']['error']);
+            throw new Exception($data['message'] ?? $data['messages']['error'], $response->status());
         }
 
         return $data['data'] ?? [];

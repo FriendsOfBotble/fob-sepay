@@ -38,9 +38,11 @@ class SePayController extends BaseController
     public function paymentCodes(): BaseHttpResponse
     {
         try {
+            $company = $this->client->company();
+
             return $this
                 ->httpResponse()
-                ->setData($this->client->company()->configurations['payment_code_formats']);
+                ->setData($company['configurations']['payment_code_formats']);
         } catch (Exception $e) {
             return $this
                 ->httpResponse()

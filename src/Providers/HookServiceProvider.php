@@ -2,15 +2,18 @@
 
 namespace FriendsOfBotble\SePay\Providers;
 
+use Botble\Base\Facades\BaseHelper;
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Facades\PaymentMethods;
 use Botble\Payment\Http\Requests\PaymentMethodRequest;
+use Exception;
 use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
 use FriendsOfBotble\SePay\SePay;
 use FriendsOfBotble\SePay\SePayClient;
 use FriendsOfBotble\SePay\Services\Gateways\SePayPaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rule;
@@ -138,15 +141,71 @@ class HookServiceProvider extends ServiceProvider
             if ($request instanceof PaymentMethodRequest) {
                 $client = new SePayClient();
 
+                $bankAccounts = $client->bankAccounts();
+
                 $rules = [
                     ...$rules,
-                    'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($client->bankAccounts(), 'id'))],
-                    'payment_sepay_bank_sub_account_id' => ['nullable', 'string', Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id'))],
-                    'payment_sepay_prefix' => ['required', 'string', Rule::in(array_column($client->company()->configurations['payment_code_formats'], 'prefix'))],
+                    'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($bankAccounts, 'id'))],
+                    'payment_sepay_bank_sub_account_id' => [
+                        Rule::requiredIf(function () use ($request, $bankAccounts) {
+                            $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $request->input('payment_sepay_bank_account_id'));
+                            $requiredBanks = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
+
+                            return $selectedBankAccount && in_array($selectedBankAccount['bank']['short_name'], $requiredBanks);
+                        }),
+                        'nullable',
+                        'string',
+                        Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
+                    ],
+                    'payment_sepay_prefix' => [
+                        'required',
+                        'string',
+                        Rule::in(array_column(Arr::get($client->company(), 'configurations.payment_code_formats'), 'prefix')),
+                    ],
                 ];
             }
 
             return $rules;
         }, 999, 2);
+
+        add_action('core_before_update_settings', function (array $data) {
+            if (! array_key_exists('payment_sepay_status', $data)) {
+                return;
+            }
+
+            if (! $bankAccountId = get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
+                return;
+            }
+
+            $client = new SePayClient();
+            $webhookId = setting()->get('sepay_webhook_id');
+
+            $data = [
+                'bank_account_id' => $bankAccountId,
+            ];
+
+            try {
+                if ($webhookId) {
+                    $webhook = $client->webhook($webhookId);
+
+                    if (! $webhook) {
+                        $webhook = $client->createWebhook($data);
+                    } elseif ($webhook['bank_account_id'] != $bankAccountId) {
+                        $webhook = $client->updateWebhook($webhookId, $data);
+                        $webhook['id'] = $webhookId;
+                    }
+                } else {
+                    $webhook = $client->createWebhook($data);
+                }
+            } catch (Exception $e) {
+                if ($e->getCode() === 404) {
+                    $webhook = $client->createWebhook($data);
+                } else {
+                    BaseHelper::logError($e);
+                }
+            }
+
+            setting()->set('sepay_webhook_id', $webhook['id']);
+        }, 999);
     }
 }

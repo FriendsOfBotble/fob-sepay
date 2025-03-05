@@ -59,7 +59,9 @@
                         <div
                             class="sepay-connected-profile bg-body p-3 rounded mb-3"
                             data-get-bank-sub-accounts-url="{{ route('sepay.bank-sub-accounts') }}"
+                            data-get-payment-codes-url="{{ route('sepay.payment-codes') }}"
                             data-bank-sub-account-id="{{ get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME) }}"
+                            data-payment-code-prefix="{{ get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME) }}"
                         >
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                 <span class="avatar avatar-lg" style="background-image: url({{ $profile->avatar }});"></span>
@@ -99,29 +101,6 @@
                             </div>
                         </div>
 
-                        <script>
-                            function disconnectSepay() {
-                                if (confirm('Are you sure you want to disconnect your SePay account?')) {
-                                    $.ajax({
-                                        url: '{{ route('sepay.oauth.disconnect') }}',
-                                        type: 'POST',
-                                        data: {
-                                            _token: '{{ csrf_token() }}',
-                                        },
-                                        success: function(response) {
-                                            if (response.data.success) {
-                                                location.reload();
-                                            } else {
-                                                alert('An error occurred. Please try again.');
-                                            }
-                                        },
-                                        error: function(xhr, status, error) {
-                                            alert('An error occurred. Please try again.');
-                                        }
-                                    });
-                                }
-                            }
-                        </script>
                         <x-core::form>
                             <input type="hidden" name="type" value="{{ $id }}" class="payment_type" />
 
@@ -247,5 +226,27 @@
             'sepayOAuthWindow',
             `width=${width},height=${height},top=${top},left=${left},toolbar=no,menubar=no,scrollbars=yes,resizable=yes,status=no`
         );
+    }
+
+    function disconnectSepay() {
+        if (confirm('Are you sure you want to disconnect your SePay account?')) {
+            $.ajax({
+                url: '{{ route('sepay.oauth.disconnect') }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    if (response.data.success) {
+                        location.reload();
+                    } else {
+                        alert('An error occurred. Please try again.');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        }
     }
 </script>

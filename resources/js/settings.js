@@ -41,7 +41,29 @@ $(() => {
         }
     }
 
+    const initPaymentCodePrefixes = () => {
+        $.ajax({
+            url: sepayContainer.data('get-payment-codes-url'),
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                let options = ''
+
+
+                if (response.data.length > 0) {
+                    response.data.forEach((paymentCode) => {
+                        options += `<option value="${paymentCode.prefix}">${paymentCode.prefix}</option>`
+                    })
+                }
+
+                $('#payment_sepay_prefix').html(options)
+                $('#payment_sepay_prefix').val(sepayContainer.data('payment-code-prefix'))
+            },
+        })
+    }
+
     initBankSubAccount()
+    initPaymentCodePrefixes()
 
     $(document).on('change', '#payment_sepay_bank_account_id', function (e) {
         initBankSubAccount()

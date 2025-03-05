@@ -31,12 +31,6 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         $item['id'] => $item['bank']['short_name'] . ' - ' . $item['account_number'] . ' - ' . $item['account_holder_name'],
                     ])->all();
 
-                $paymentCodePrefixes = collect($client->company()->configurations['payment_code_formats'])
-                    ->reject(fn($item) => ! $item['is_active'])
-                    ->mapWithKeys(fn($item) => [
-                        $item['prefix'] => $item['prefix'],
-                    ])->all();
-
                 $form
                     ->add(
                         get_payment_setting_key('bank_account_id', SEPAY_PAYMENT_METHOD_NAME),
@@ -57,9 +51,7 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                     ->add(
                         get_payment_setting_key('prefix', SEPAY_PAYMENT_METHOD_NAME),
                         SelectField::class,
-                        SelectFieldOption::make()
-                            ->choices($paymentCodePrefixes)
-                            ->label('Tiền tố mã thanh toán')
+                        SelectFieldOption::make()->label('Tiền tố mã thanh toán')
                     );
             });
     }
