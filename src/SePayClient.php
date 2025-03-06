@@ -13,6 +13,17 @@ class SePayClient
         return setting()->get('sepay_connected_at') !== null;
     }
 
+    public function getQrCodeUrl(string $accountNumber, string $bank, float $amount, string $chargeId): string
+    {
+        return 'https://qr.sepay.vn/img?' . http_build_query([
+            'acc' => $accountNumber,
+            'bank' => $bank,
+            'amount' => $amount,
+            'des' => $chargeId,
+            'template' => 'compact',
+        ]);
+    }
+
     public function profile(): ?object
     {
         return Cache::remember('sepay.profile', 60 * 60, function () {

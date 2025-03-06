@@ -53,10 +53,14 @@ class SePayController extends BaseController
         }
     }
 
-    public function checkTransaction(string $chargeId): BaseHttpResponse
+    public function checkTransaction(Request $request): BaseHttpResponse
     {
+        $request->validate([
+            'charge_id' => ['required', 'string'],
+        ]);
+
         $payment = Payment::query()
-            ->where('charge_id', $chargeId)
+            ->where('charge_id', $request->input('charge_id'))
             ->whereIn('status', [PaymentStatusEnum::PENDING, PaymentStatusEnum::COMPLETED])
             ->firstOrFail();
 

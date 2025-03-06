@@ -5,13 +5,12 @@ namespace FriendsOfBotble\SePay\Providers;
 use Botble\Base\Facades\BaseHelper;
 use Botble\Ecommerce\Models\Order;
 use Botble\Payment\Enums\PaymentMethodEnum;
+use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Facades\PaymentMethods;
 use Botble\Payment\Http\Requests\PaymentMethodRequest;
 use Exception;
 use FriendsOfBotble\SePay\Forms\SePayPaymentMethodForm;
-use FriendsOfBotble\SePay\SePay;
 use FriendsOfBotble\SePay\SePayClient;
-use FriendsOfBotble\SePay\Services\Gateways\SePayPaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -69,7 +68,21 @@ class HookServiceProvider extends ServiceProvider
 
             $paymentData = apply_filters(PAYMENT_FILTER_PAYMENT_DATA, [], $request);
 
-            $data['charge_id'] = (new SePayPaymentService())->execute($paymentData);
+            $chargeId = get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME, 'SDH');
+            $chargeId .= sprintf('%\'.09d', (int) (microtime(true) * 10));
+
+            do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
+                'amount' => $paymentData['amount'],
+                'currency' => $paymentData['currency'],
+                'charge_id' => $chargeId,
+                'order_id' => $paymentData['order_id'],
+                'customer_id' => $paymentData['customer_id'],
+                'customer_type' => $paymentData['customer_type'],
+                'payment_channel' => SEPAY_PAYMENT_METHOD_NAME,
+                'status' => PaymentStatusEnum::PENDING,
+            ]);
+
+            $data['charge_id'] = $chargeId;
 
             return $data;
         }, 999, 2);
@@ -85,7 +98,7 @@ class HookServiceProvider extends ServiceProvider
 
             if (
                 ! $payment
-                || $payment->payment_channel->getValue() !== SEPAY_PAYMENT_METHOD_NAME
+                || $payment->payment_channel != SEPAY_PAYMENT_METHOD_NAME
                 || $payment->currency !== 'VND'
             ) {
                 return $html;
@@ -97,10 +110,32 @@ class HookServiceProvider extends ServiceProvider
                 $orderAmount += $item->amount;
             }
 
+            $banks = [
+                'vietcombank' => 'Vietcombank',
+                'vpbank' => 'VPBank',
+                'acb' => 'ACB',
+                'sacombank' => 'Sacombank',
+                'hdbank' => 'HDBank',
+                'vietinbank' => 'VietinBank',
+                'techcombank' => 'Techcombank',
+                'mbbank' => 'MBBank',
+                'bidv' => 'BIDV',
+                'msb' => 'MSB',
+                'shinhanbank' => 'ShinhanBank',
+                'tpbank' => 'TPBank',
+                'eximbank' => 'Eximbank',
+                'vib' => 'VIB',
+                'agribank' => 'Agribank',
+                'publicbank' => 'PublicBank',
+                'kienlongbank' => 'KienLongBank',
+                'ocb' => 'OCB',
+            ];
+
             $chargeId = $payment->charge_id;
-            $bank = SePay::getBankById(get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME));
+            $bank = $banks[get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME)] ?? 'Vietcombank';
             $bankAccountNumber = get_payment_setting('account_number', SEPAY_PAYMENT_METHOD_NAME);
             $bankAccountHolder = get_payment_setting('account_holder', SEPAY_PAYMENT_METHOD_NAME);
+            $bankShortName = $bank;
 
             $client = new SePayClient();
 
@@ -108,6 +143,7 @@ class HookServiceProvider extends ServiceProvider
                 $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
 
                 $bank = "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})";
+                $bankShortName = $bankAccount->bank['short_name'];
                 $bankAccountNumber = $bankAccount->account_number;
                 $bankAccountHolder = $bankAccount->account_holder_name;
 
@@ -117,24 +153,19 @@ class HookServiceProvider extends ServiceProvider
                     $bankSubAccount = collect($bankSubAccounts)->firstWhere('id', $bankSubAccountId);
 
                     $bankAccountNumber = $bankSubAccount['account_number'];
-                    $bankAccountHolder = $bankSubAccount['account_holder_name'];
+                    $bankAccountHolder = $bankSubAccount['account_holder_name'] ?: $bankAccountHolder;
                 }
             }
 
-            $html .= view(
-                'plugins/fob-sepay::bank-info',
-                [
-                    'orderAmount' => $orderAmount,
-                    'imageUrl' => SePay::getQRCodeUrl($orderAmount, $chargeId),
-                    'bank' => $bank,
-                    'bankAccountNumber' => $bankAccountNumber,
-                    'bankAccountHolder' => $bankAccountHolder,
-                    'chargeId' => $chargeId,
-                    'payment' => $payment,
-                ]
-            )->render();
-
-            return $html;
+            return $html .= view('plugins/fob-sepay::bank-info', [
+                'orderAmount' => $orderAmount,
+                'imageUrl' => $client->getQrCodeUrl($bankAccountNumber, $bankShortName, $orderAmount, $chargeId),
+                'bank' => $bank,
+                'bankAccountNumber' => $bankAccountNumber,
+                'bankAccountHolder' => $bankAccountHolder,
+                'chargeId' => $chargeId,
+                'payment' => $payment,
+            ])->render();
         }, 9999, 2);
 
         add_filter('core_request_rules', function (array $rules, Request $request) {
