@@ -38,9 +38,7 @@ class SePayClient
 
     public function bankAccounts(): array
     {
-        return Cache::remember('sepay.bank-accounts', 60 * 60, function () {
-            return $this->request('get', 'bank-accounts');
-        });
+        return $this->request('get', 'bank-accounts');
     }
 
     public function bankAccount($id): ?object
@@ -52,9 +50,7 @@ class SePayClient
 
     public function bankSubAccounts(int $bankAccountId)
     {
-        return Cache::remember("sepay.bank-sub-accounts.$bankAccountId", 60 * 60, function () use ($bankAccountId) {
-            return $this->request('get', "bank-accounts/$bankAccountId/sub-accounts");
-        });
+        return $this->request('get', "bank-accounts/$bankAccountId/sub-accounts");
     }
 
     public function webhook(int $id): ?array
@@ -69,13 +65,14 @@ class SePayClient
         setting()->set('sepay_api_key', $apiKey)->save();
 
         return $this->request('post', 'webhooks', [
-            'name' => sprintf('FOB SePay %s', config('app.url')),
+            'name' => sprintf('FOB SePay - %s', config('app.name')),
             'event_type' => 'In_only',
             'authen_type' => 'Api_Key',
             'api_key' => $apiKey,
             // 'webhook_url' => route('sepay.webhook'),
             'webhook_url' => 'https://shofy.botble.com/sepay/webhook',
             'is_verify_payment' => true,
+            'skip_if_no_code' => true,
             'request_content_type' => 'Json',
             ...$data,
         ]);

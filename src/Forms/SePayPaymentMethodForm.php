@@ -51,6 +51,18 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                         get_payment_setting_key('prefix', SEPAY_PAYMENT_METHOD_NAME),
                         SelectField::class,
                         SelectFieldOption::make()->label('Tiền tố mã thanh toán')
+                    )
+                    ->add(
+                        get_payment_setting_key('bank_display', SEPAY_PAYMENT_METHOD_NAME),
+                        SelectField::class,
+                        SelectFieldOption::make()
+                            ->label('Hiển thị tên ngân hàng')
+                            ->choices([
+                                'full_name' => 'Tên đầy đủ',
+                                'short_name' => 'Tên ngắn',
+                                'full_name_short_name' => 'Tên đầy đủ + Tên ngắn',
+                            ])
+                            ->selected(get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name'))
                     );
             });
     }

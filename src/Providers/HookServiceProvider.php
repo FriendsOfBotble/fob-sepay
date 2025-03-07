@@ -142,7 +142,13 @@ class HookServiceProvider extends ServiceProvider
             if ($client->isConnected()) {
                 $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
 
-                $bank = "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})";
+                $bank = match (get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name')) {
+                    'full_name' => $bankAccount->bank['full_name'],
+                    'short_name' => $bankAccount->bank['short_name'],
+                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})",
+                    default => $bank,
+                };
+
                 $bankShortName = $bankAccount->bank['short_name'];
                 $bankAccountNumber = $bankAccount->account_number;
                 $bankAccountHolder = $bankAccount->account_holder_name;
@@ -150,22 +156,31 @@ class HookServiceProvider extends ServiceProvider
                 if ($bankSubAccountId = get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
                     $bankSubAccounts = $client->bankSubAccounts($bankAccount->id);
 
-                    $bankSubAccount = collect($bankSubAccounts)->firstWhere('id', $bankSubAccountId);
+                    $bankSubAccount = collect($bankSubAccounts)
+                        ->where('bank_account_id', $bankAccount->id)
+                        ->where('id', $bankSubAccountId)
+                        ->first();
 
-                    $bankAccountNumber = $bankSubAccount['account_number'];
-                    $bankAccountHolder = $bankSubAccount['account_holder_name'] ?: $bankAccountHolder;
+                    if ($bankSubAccount) {
+                        $bankAccountNumber = $bankSubAccount['account_number'];
+                        $bankAccountHolder = $bankSubAccount['account_holder_name'] ?: $bankAccountHolder;
+                    }
                 }
             }
 
-            return $html .= view('plugins/fob-sepay::bank-info', [
-                'orderAmount' => $orderAmount,
-                'imageUrl' => $client->getQrCodeUrl($bankAccountNumber, $bankShortName, $orderAmount, $chargeId),
-                'bank' => $bank,
-                'bankAccountNumber' => $bankAccountNumber,
-                'bankAccountHolder' => $bankAccountHolder,
-                'chargeId' => $chargeId,
-                'payment' => $payment,
-            ])->render();
+            $bankLogo = sprintf('https://my.sepay.vn/assets/images/banklogo/%s.png', strtolower($bankShortName));
+            $qrCodeUrl = $client->getQrCodeUrl($bankAccountNumber, $bankShortName, $orderAmount, $chargeId);
+
+            return $html .= view('plugins/fob-sepay::bank-info', compact(
+                'orderAmount',
+                'qrCodeUrl',
+                'bank',
+                'bankLogo',
+                'bankAccountNumber',
+                'bankAccountHolder',
+                'chargeId',
+                'payment'
+            ))->render();
         }, 9999, 2);
 
         add_filter('core_request_rules', function (array $rules, Request $request) {
