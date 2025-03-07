@@ -23,6 +23,8 @@ class WebhookController
             return response()->json(['success' => false]);
         }
 
+        do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
+
         if ($payment->status == PaymentStatusEnum::COMPLETED) {
             return response()->json(['success' => true]);
         }
