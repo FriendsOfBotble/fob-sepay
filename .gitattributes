@@ -7,3 +7,4 @@
 /pint.json          export-ignore
 /.editorconfig      export-ignore
 /.github            export-ignore
+/art                export-ignore

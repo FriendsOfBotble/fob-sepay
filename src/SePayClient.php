@@ -60,7 +60,7 @@ class SePayClient
 
     public function createWebhook(array $data): array
     {
-        $apiKey = base64_encode(random_bytes(32));
+        $apiKey = bin2hex(random_bytes(16));
 
         setting()->set('sepay_api_key', $apiKey)->save();
 

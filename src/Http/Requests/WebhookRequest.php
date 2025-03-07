@@ -9,9 +9,9 @@ class WebhookRequest extends Request
     public function rules(): array
     {
         return [
-            'id' => ['required', 'string'],
+            'id' => ['required', 'integer'],
             'gateway' => ['required', 'string'],
-            'transactionDate' => ['required', 'string'],
+            'transactionDate' => ['required', 'string', 'date'],
             'accountNumber' => ['required', 'string'],
             'code' => ['required', 'string'],
             'content' => ['required', 'string'],
