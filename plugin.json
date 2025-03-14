@@ -1,6 +1,6 @@
 {
     "id": "friendsofbotble/fob-sepay",
-    "name": "SePay",
+    "name": "SePay Gateway",
     "namespace": "FriendsOfBotble\\SePay\\",
     "provider": "FriendsOfBotble\\SePay\\Providers\\SePayServiceProvider",
     "author": "Friends Of Botble",

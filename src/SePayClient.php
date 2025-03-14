@@ -114,7 +114,7 @@ class SePayClient
             throw new Exception('Refresh token not found. Please reconnect your SePay account.');
         }
 
-        $response = Http::post('http://friendsofbotble.test/oauth/sepay/token', [
+        $response = Http::post('https://friendsofbotble.com/oauth/sepay/token', [
             'refresh_token' => $refreshToken,
         ]);
 

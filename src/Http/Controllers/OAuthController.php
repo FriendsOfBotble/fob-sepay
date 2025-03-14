@@ -20,7 +20,7 @@ class OAuthController extends BaseController
             'state' => $state,
         ]);
 
-        return redirect()->away("http://friendsofbotble.test/oauth/sepay/init?$queryParams");
+        return redirect()->away("https://friendsofbotble.com/oauth/sepay/init?$queryParams");
     }
 
     public function callback(Request $request)
