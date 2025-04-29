@@ -18,28 +18,12 @@ Plugin này cho phép bạn tích hợp SePay để tự động xác thực tha
 3. Tìm kiếm plugin **SePay**
 4. Bấm vào "Cài đặt (Install)"
 
-### Cài đặt thủ công
-
-1. Tải về các bản phát hành tại đây hoặc trên [Botble Marketplace](https://marketplace.botble.com/products/friendsofbotble/fob-sepay)
-2. Giải nén file nén vào thư mục `platform/plugins`
-3. Vào **Bảng quản trị (Admin)**, chọn **Plugins**, và bấm vào nút **Kích hoạt (Activate)**
-
 ## Cách sử dụng
 
 1. Vào **Bảng quản trị (Admin)**, chọn **Thanh toán (Payments)**, và bấm vào **Phương thức thanh toán (Payment Methods)**
-2. Kích hoạt **SePay**  
-   ![Cấu hình SePay](./art/Screenshot_1.png)
-3. Sao chép "Webhook URL" và mã bảo mật. Nếu "Mã bảo mật chưa được tạo", bấm vào nút bên dưới để tạo (nhớ sao chép mã vì nó chỉ hiển thị 1 lần duy nhất)
-4. Truy cập vào [My SePay](https://my.sepay.vn) → **Tích hợp webhooks** → **Tạo Webhook Mới**
-5. Điền biểu mẫu như hình bên dưới. Lưu ý 3 điểm quan trọng:
-   - Đường dẫn webhook
-   - Kiểu xác thực là *API Key*
-   - Dán mã bảo mật được tạo ở Botble vào trường API Key
-   ![Cấu hình Webhook SePay](./art/Screenshot_2.png)
-6. Sau khi cấu hình xong, bạn có thể sử dụng phương thức thanh toán này như bình thường:
-   ![Quá trình thanh toán](./art/Screenshot_3.png)
-   ![Quá trình thanh toán](./art/Screenshot_4.png)
-   ![Quá trình thanh toán](./art/Screenshot_5.png)
+2. Kích hoạt **SePay**
+3. Nhấn vào nút "Kết nối với SePay" và chọn tài khoản ngân hàng bạn muốn sử dụng
+4. Sau khi kết nối thành công, bạn có thể sử dụng phương thức thanh toán này ngay lập tức
 
 ## Lịch sử thay đổi
 

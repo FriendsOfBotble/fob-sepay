@@ -6,7 +6,9 @@ use Botble\Base\Facades\Assets;
 use Botble\Base\Forms\FieldOptions\SelectFieldOption;
 use Botble\Base\Forms\Fields\SelectField;
 use Botble\Payment\Forms\PaymentMethodForm;
+use Exception;
 use FriendsOfBotble\SePay\SePayClient;
+use Illuminate\Support\Facades\Log;
 
 class SePayPaymentMethodForm extends PaymentMethodForm
 {
@@ -24,46 +26,50 @@ class SePayPaymentMethodForm extends PaymentMethodForm
             ->paymentLogo(url('vendor/core/plugins/fob-sepay/images/sepay.png'))
             ->paymentUrl('https://sepay.vn')
             ->when($client->isConnected(), function (PaymentMethodForm $form) use ($client) {
-                $bankAccounts = collect($client->bankAccounts())
-                    ->mapWithKeys(fn($item) => [
-                        $item['id'] => $item['bank']['short_name'] . ' - ' . $item['account_number'] . ' - ' . $item['account_holder_name'],
-                    ])->all();
+                try {
+                    $bankAccounts = collect($client->bankAccounts())
+                        ->mapWithKeys(fn($item) => [
+                            $item['id'] => $item['bank']['short_name'] . ' - ' . $item['account_number'] . ' - ' . $item['account_holder_name'],
+                        ])->all();
 
-                $form
-                    ->add(
-                        get_payment_setting_key('bank_account_id', SEPAY_PAYMENT_METHOD_NAME),
-                        SelectField::class,
-                        SelectFieldOption::make()
-                            ->searchable()
-                            ->choices($bankAccounts)
-                            ->selected(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME))
-                            ->label('Tài khoản ngân hàng')
-                    )
-                    ->add(
-                        get_payment_setting_key('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME),
-                        SelectField::class,
-                        SelectFieldOption::make()
-                            ->searchable()
-                            ->wrapperAttributes(['style' => 'display: none'])
-                            ->label('Tài khoản ảo')
-                    )
-                    ->add(
-                        get_payment_setting_key('prefix', SEPAY_PAYMENT_METHOD_NAME),
-                        SelectField::class,
-                        SelectFieldOption::make()->label('Tiền tố mã thanh toán')
-                    )
-                    ->add(
-                        get_payment_setting_key('bank_display', SEPAY_PAYMENT_METHOD_NAME),
-                        SelectField::class,
-                        SelectFieldOption::make()
-                            ->label('Hiển thị tên ngân hàng')
-                            ->choices([
-                                'full_name' => 'Tên đầy đủ',
-                                'short_name' => 'Tên ngắn',
-                                'full_name_short_name' => 'Tên đầy đủ + Tên ngắn',
-                            ])
-                            ->selected(get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name'))
-                    );
+                    $form
+                        ->add(
+                            get_payment_setting_key('bank_account_id', SEPAY_PAYMENT_METHOD_NAME),
+                            SelectField::class,
+                            SelectFieldOption::make()
+                                ->searchable()
+                                ->choices($bankAccounts)
+                                ->selected(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME))
+                                ->label('Tài khoản ngân hàng')
+                        )
+                        ->add(
+                            get_payment_setting_key('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME),
+                            SelectField::class,
+                            SelectFieldOption::make()
+                                ->searchable()
+                                ->wrapperAttributes(['style' => 'display: none'])
+                                ->label('Tài khoản ảo')
+                        )
+                        ->add(
+                            get_payment_setting_key('prefix', SEPAY_PAYMENT_METHOD_NAME),
+                            SelectField::class,
+                            SelectFieldOption::make()->label('Tiền tố mã thanh toán')
+                        )
+                        ->add(
+                            get_payment_setting_key('bank_display', SEPAY_PAYMENT_METHOD_NAME),
+                            SelectField::class,
+                            SelectFieldOption::make()
+                                ->label('Hiển thị tên ngân hàng')
+                                ->choices([
+                                    'full_name' => 'Tên đầy đủ',
+                                    'short_name' => 'Tên ngắn',
+                                    'full_name_short_name' => 'Tên đầy đủ + Tên ngắn',
+                                ])
+                                ->selected(get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name'))
+                        );
+                } catch (Exception $e) {
+                    Log::error($e);
+                }
             });
     }
 }
