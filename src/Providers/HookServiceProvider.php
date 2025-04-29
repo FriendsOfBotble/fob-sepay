@@ -22,12 +22,8 @@ class HookServiceProvider extends ServiceProvider
     public function boot(): void
     {
         add_filter(PAYMENT_FILTER_ADDITIONAL_PAYMENT_METHODS, function (?string $html, array $data): ?string {
-            if (! view()->exists('plugins/payment::components.payment-method')) {
-                return $html . view('plugins/fob-sepay::support-old-versions.payment-method', $data)->render();
-            }
-
             PaymentMethods::method(SEPAY_PAYMENT_METHOD_NAME, [
-                'html' => view('plugins/fob-sepay::payments.methods', $data)->render(),
+                'html' => view('plugins/fob-sepay::payment-method', $data)->render(),
             ]);
 
             return $html;

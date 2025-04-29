@@ -3,9 +3,9 @@
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
+use FriendsOfBotble\SePay\Actions\VerifySignatureAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\File;
 
 class OAuthController extends BaseController
 {
@@ -23,7 +23,7 @@ class OAuthController extends BaseController
         return redirect()->away(SEPAY_FOB_URL . "/oauth/sepay/init?$queryParams");
     }
 
-    public function callback(Request $request)
+    public function callback(Request $request, VerifySignatureAction $verifySignatureAction)
     {
         $validated = $request->validate([
             'access_token' => 'required|string',
@@ -33,7 +33,7 @@ class OAuthController extends BaseController
             'signature' => 'required|string',
         ]);
 
-        if (! $this->verifySignature($validated)) {
+        if (! $verifySignatureAction($validated)) {
             return response()->json(['error' => 'Invalid signature'], 400);
         }
 
@@ -72,27 +72,7 @@ class OAuthController extends BaseController
 
         return $this
             ->httpResponse()
-            ->setMessage('Disconnected successfully')
+            ->setMessage('Ngắt kết nối với SePay thành công')
             ->setData(['success' => true]);
-    }
-
-    protected function verifySignature(array $data): bool
-    {
-        $publicKeyPath = plugin_path('fob-sepay/resources/keys/public.pem');
-
-        if (! File::exists($publicKeyPath)) {
-            return false;
-        }
-
-        $publicKey = File::get($publicKeyPath);
-        $dataToVerify = "{$data['access_token']}.{$data['state']}";
-        $signature = base64_decode($data['signature']);
-
-        return openssl_verify(
-            $dataToVerify,
-            $signature,
-            openssl_pkey_get_public($publicKey),
-            OPENSSL_ALGO_SHA256
-        ) === 1;
     }
 }

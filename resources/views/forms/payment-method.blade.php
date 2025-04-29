@@ -168,7 +168,7 @@
                         <div class="sepay-oauth-container">
                             <div class="row align-items-center mb-4">
                                 <div class="col-md-4">
-                                    <img src="https://ps.w.org/sepay-gateway/assets/banner-772x250.png?rev=3135863" alt="SePay" class="img-fluid rounded" />
+                                    <img src="{{ asset('vendor/core/plugins/fob-sepay/screenshot.png') }}" alt="SePay" class="img-fluid rounded" />
                                 </div>
                                 <div class="col-md-8">
                                     <h3 class="mb-2 fw-bold text-primary">Kết nối với SePay</h3>
