@@ -164,7 +164,7 @@ class HookServiceProvider extends ServiceProvider
                 }
             }
 
-            $bankLogo = sprintf('https://my.sepay.vn/assets/images/banklogo/%s.png', strtolower($bankShortName));
+            $bankLogo = $bankAccount->bank['logo_url'];
             $qrCodeUrl = $client->getQrCodeUrl($bankAccountNumber, $bankShortName, $orderAmount, $chargeId);
 
             return $html .= view('plugins/fob-sepay::bank-info', compact(
@@ -197,7 +197,7 @@ class HookServiceProvider extends ServiceProvider
                         }),
                         'nullable',
                         'string',
-                        Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
+                        fn () => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
                     ],
                     'payment_sepay_prefix' => [
                         'required',
@@ -210,7 +210,7 @@ class HookServiceProvider extends ServiceProvider
             return $rules;
         }, 999, 2);
 
-        add_action('core_before_update_settings', function (array $data) {
+        add_action('core_after_update_settings', function (array $data) {
             if (! array_key_exists('payment_sepay_status', $data)) {
                 return;
             }
@@ -238,6 +238,7 @@ class HookServiceProvider extends ServiceProvider
                     }
                 } else {
                     $webhook = $client->createWebhook($data);
+                    dd($webhook);
                 }
             } catch (Exception $e) {
                 if ($e->getCode() === 404) {

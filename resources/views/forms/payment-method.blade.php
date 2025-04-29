@@ -68,7 +68,7 @@
                                 <div>
                                     <h4 class="mb-1">
                                         {{ $profile->last_name . ' ' . $profile->first_name }}
-                                        <span class="badge bg-success text-bg-success ms-2">Connected</span>
+                                        <span class="badge bg-success text-bg-success ms-2">Đã kết nối</span>
                                     </h4>
                                     <p class="d-flex align-items-center gap-1 text-muted mb-0 small">
                                         <x-core::icon name="ti ti-id" />
@@ -78,7 +78,7 @@
                                 <div class="ms-0 ms-lg-auto">
                                     <x-core::button type="button" color="danger" size="sm" outlined="true" onclick="disconnectSepay()">
                                         <x-core::icon name="ti ti-unlink" class="me-1" />
-                                        Disconnect account
+                                        Ngắt kết nối tài khoản
                                     </x-core::button>
                                 </div>
                             </div>
@@ -229,7 +229,7 @@
     }
 
     function disconnectSepay() {
-        if (confirm('Are you sure you want to disconnect your SePay account?')) {
+        if (confirm('Bạn có chắc chắn muốn ngắt kết nối tài khoản SePay?')) {
             $.ajax({
                 url: '{{ route('sepay.oauth.disconnect') }}',
                 type: 'POST',
@@ -240,11 +240,11 @@
                     if (response.data.success) {
                         location.reload();
                     } else {
-                        alert('An error occurred. Please try again.');
+                        alert('Đã xảy ra lỗi. Vui lòng thử lại.');
                     }
                 },
                 error: function(xhr, status, error) {
-                    alert('An error occurred. Please try again.');
+                    alert('Đã xảy ra lỗi. Vui lòng thử lại.');
                 }
             });
         }
