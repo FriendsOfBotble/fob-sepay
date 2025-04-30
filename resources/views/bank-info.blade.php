@@ -260,22 +260,22 @@
                     </div>
 
                     <div class="col-md-7 sepay-details">
-                        @if(isset($bankLogo) && $bankLogo)
-                            <img src="{{ $bankLogo }}" alt="{{ $bank }}" class="sepay-bank-logo">
+                        @if(isset($bankInfo['bankLogo']) && $bankInfo['bankLogo'])
+                            <img src="{{ $bankInfo['bankLogo'] }}" alt="{{ $bankInfo['bank'] }}" class="sepay-bank-logo">
                         @endif
                         <div class="sepay-detail-row">
                             <div class="sepay-detail-label">Tên Ngân Hàng</div>
-                            <div class="sepay-detail-value">{{ $bank }}</div>
+                            <div class="sepay-detail-value">{{ $bankInfo['bank'] }}</div>
                         </div>
                         <div class="sepay-detail-row">
                             <div class="sepay-detail-label">Chủ Tài Khoản</div>
-                            <div class="sepay-detail-value">{{ $bankAccountHolder }}</div>
+                            <div class="sepay-detail-value">{{ $bankInfo['bankAccountHolder'] }}</div>
                         </div>
                         <div class="sepay-detail-row">
                             <div class="sepay-detail-label">Số Tài Khoản</div>
                             <div class="sepay-detail-value">
-                                {{ $bankAccountNumber }}
-                                <button class="sepay-copy-btn" data-clipboard="{{ $bankAccountNumber }}" data-bb-toggle="copy">
+                                {{ $bankInfo['bankAccountNumber'] }}
+                                <button class="sepay-copy-btn" data-clipboard="{{ $bankInfo['bankAccountNumber'] }}" data-bb-toggle="copy">
                                     <x-core::icon name="ti ti-clipboard" />
                                 </button>
                             </div>

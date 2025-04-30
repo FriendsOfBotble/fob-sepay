@@ -139,7 +139,6 @@ class HookServiceProvider extends ServiceProvider
                 $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['account_number'], $bankInfo['short_name'], $orderAmount, $payment->charge_id);
 
                 $html .= view('plugins/fob-sepay::bank-info', array_merge(
-                    // compact('orderAmount', 'qrCodeUrl', 'payment'),
                     [
                         'orderAmount' => $orderAmount,
                         'qrCodeUrl' => $qrCodeUrl,
