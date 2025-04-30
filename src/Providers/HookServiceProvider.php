@@ -219,11 +219,11 @@ class HookServiceProvider extends ServiceProvider
 
         try {
             $webhook = $this->handleWebhookUpdate($client, $webhookId, $data);
-            setting()->set('sepay_webhook_id', $webhook['id']);
+            setting()->set('sepay_webhook_id', $webhook['id'])->update();
         } catch (Exception $e) {
             if ($e->getCode() === 404) {
                 $webhook = $client->createWebhook($data);
-                setting()->set('sepay_webhook_id', $webhook['id']);
+                setting()->set('sepay_webhook_id', $webhook['id'])->update();
             } else {
                 BaseHelper::logError($e);
             }
