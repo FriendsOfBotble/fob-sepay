@@ -70,9 +70,10 @@ class SePayClient
             'authen_type' => 'Api_Key',
             'api_key' => $apiKey,
             'webhook_url' => route('sepay.webhook'),
-            'is_verify_payment' => true,
-            'skip_if_no_code' => true,
+            'is_verify_payment' => 1,
+            'skip_if_no_code' => 1,
             'request_content_type' => 'Json',
+            'only_va' => 0,
             ...$data,
         ]);
     }
