@@ -238,7 +238,6 @@ class HookServiceProvider extends ServiceProvider
                     }
                 } else {
                     $webhook = $client->createWebhook($data);
-                    dd($webhook);
                 }
             } catch (Exception $e) {
                 if ($e->getCode() === 404) {
