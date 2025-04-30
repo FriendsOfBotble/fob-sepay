@@ -5,6 +5,7 @@ namespace FriendsOfBotble\SePay;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SePayClient
 {
@@ -100,7 +101,8 @@ class SePayClient
         $data = $response->json();
 
         if (isset($data['status']) && $data['status'] !== 'success') {
-            throw new Exception($data['message'] ?? $data['messages']['error'], $response->status());
+            Log::error('SePay API error: ' . $data['message'] ?? $data['messages']['error']);
+            return [];
         }
 
         return $data['data'] ?? [];
