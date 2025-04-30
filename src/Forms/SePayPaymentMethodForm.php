@@ -27,6 +27,8 @@ class SePayPaymentMethodForm extends PaymentMethodForm
             ->paymentUrl('https://sepay.vn')
             ->when($client->isConnected(), function (PaymentMethodForm $form) use ($client) {
                 try {
+                    $form->setData('profile', $client->profile());
+
                     $bankAccounts = collect($client->bankAccounts())
                         ->mapWithKeys(fn($item) => [
                             $item['id'] => $item['bank']['short_name'] . ' - ' . $item['account_number'] . ' - ' . $item['account_holder_name'],

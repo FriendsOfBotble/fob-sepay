@@ -54,52 +54,55 @@
                 <x-core::table.body.cell colspan="3">
                     @if ($isConnected)
                         @php
-                            $profile = $sepayClient->profile();
+                            $profile = $form->getData('profile');
                         @endphp
-                        <div
-                            class="sepay-connected-profile bg-body p-3 rounded mb-3"
-                            data-get-bank-sub-accounts-url="{{ route('sepay.bank-sub-accounts') }}"
-                            data-get-payment-codes-url="{{ route('sepay.payment-codes') }}"
-                            data-bank-sub-account-id="{{ get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME) }}"
-                            data-payment-code-prefix="{{ get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME) }}"
-                        >
-                            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                                <span class="avatar avatar-lg" style="background-image: url({{ $profile->avatar }});"></span>
-                                <div>
-                                    <h4 class="mb-1">
-                                        {{ $profile->last_name . ' ' . $profile->first_name }}
-                                        <span class="badge bg-success text-bg-success ms-2">Đã kết nối</span>
-                                    </h4>
-                                    <p class="d-flex align-items-center gap-1 text-muted mb-0 small">
-                                        <x-core::icon name="ti ti-id" />
-                                        ID: {{ $profile->id }}
-                                    </p>
-                                </div>
-                                <div class="ms-0 ms-lg-auto">
-                                    <x-core::button type="button" color="danger" size="sm" outlined="true" onclick="disconnectSepay()">
-                                        <x-core::icon name="ti ti-unlink" class="me-1" />
-                                        Ngắt kết nối tài khoản
-                                    </x-core::button>
-                                </div>
-                            </div>
 
-                            <div class="sepay-account-details">
-                                <div class="d-flex flex-wrap gap-4">
-                                    <div class="d-flex align-items-center">
-                                        <x-core::icon name="ti ti-mail" class="text-muted" />
-                                        <span class="ms-2">{{ $profile->email }}</span>
+                        @if($profile)
+                            <div
+                                class="sepay-connected-profile bg-body p-3 rounded mb-3"
+                                data-get-bank-sub-accounts-url="{{ route('sepay.bank-sub-accounts') }}"
+                                data-get-payment-codes-url="{{ route('sepay.payment-codes') }}"
+                                data-bank-sub-account-id="{{ get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME) }}"
+                                data-payment-code-prefix="{{ get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME) }}"
+                            >
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                    <span class="avatar avatar-lg" style="background-image: url({{ $profile->avatar }});"></span>
+                                    <div>
+                                        <h4 class="mb-1">
+                                            {{ $profile->last_name . ' ' . $profile->first_name }}
+                                            <span class="badge bg-success text-bg-success ms-2">Đã kết nối</span>
+                                        </h4>
+                                        <p class="d-flex align-items-center gap-1 text-muted mb-0 small">
+                                            <x-core::icon name="ti ti-id" />
+                                            ID: {{ $profile->id }}
+                                        </p>
                                     </div>
-                                    <div class="d-flex align-items-center">
-                                        <x-core::icon name="ti ti-phone" class="text-muted" />
-                                        <span class="ms-2">{{ $profile->phone }}</span>
+                                    <div class="ms-0 ms-lg-auto">
+                                        <x-core::button type="button" color="danger" size="sm" outlined="true" onclick="disconnectSepay()">
+                                            <x-core::icon name="ti ti-unlink" class="me-1" />
+                                            Ngắt kết nối tài khoản
+                                        </x-core::button>
                                     </div>
-                                    <div class="d-flex align-items-center">
-                                        <x-core::icon name="ti ti-calendar" class="text-muted" />
-                                        <span class="ms-2">{{ setting('sepay_connected_at') }}</span>
+                                </div>
+
+                                <div class="sepay-account-details">
+                                    <div class="d-flex flex-wrap gap-4">
+                                        <div class="d-flex align-items-center">
+                                            <x-core::icon name="ti ti-mail" class="text-muted" />
+                                            <span class="ms-2">{{ $profile->email }}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <x-core::icon name="ti ti-phone" class="text-muted" />
+                                            <span class="ms-2">{{ $profile->phone }}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <x-core::icon name="ti ti-calendar" class="text-muted" />
+                                            <span class="ms-2">{{ setting('sepay_connected_at') }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
 
                         <x-core::form>
                             <input type="hidden" name="type" value="{{ $id }}" class="payment_type" />

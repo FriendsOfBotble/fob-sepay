@@ -101,8 +101,7 @@ class SePayClient
         $data = $response->json();
 
         if (isset($data['status']) && $data['status'] !== 'success') {
-            Log::error('SePay API error: ' . $data['message'] ?? $data['messages']['error']);
-            return [];
+            throw new Exception($data['message'] ?? $data['messages']['error'], $response->status());
         }
 
         return $data['data'] ?? [];
