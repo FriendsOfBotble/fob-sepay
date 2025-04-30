@@ -135,7 +135,7 @@ class HookServiceProvider extends ServiceProvider
 
             if ($payment->status == PaymentStatusEnum::PENDING) {
                 $orderAmount = $this->calculateOrderAmount($orders);
-                $bankInfo = $this->bankService->getBankInfo($payment);
+                $bankInfo = $this->bankService->getBankInfo();
                 $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['account_number'], $bankInfo['short_name'], $orderAmount, $payment->charge_id);
 
                 $html .= view('plugins/fob-sepay::bank-info', array_merge(
@@ -167,6 +167,7 @@ class HookServiceProvider extends ServiceProvider
             }
 
             $this->updateWebhookSettings();
+            $this->bankService->clearCache();
         }, 999);
     }
 
@@ -184,28 +185,36 @@ class HookServiceProvider extends ServiceProvider
 
     protected function getPaymentMethodRules(Request $request): array
     {
-        $client = new SePayClient();
-        $bankAccounts = $client->bankAccounts();
+        try {
+            $client = new SePayClient();
+            $bankAccounts = $client->bankAccounts();
 
-        return [
-            'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($bankAccounts, 'id'))],
-            'payment_sepay_bank_sub_account_id' => [
-                Rule::requiredIf(function () use ($request, $bankAccounts) {
-                    $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $request->input('payment_sepay_bank_account_id'));
-                    $requiredBanks = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
+            return [
+                'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($bankAccounts, 'id'))],
+                'payment_sepay_bank_sub_account_id' => [
+                    Rule::requiredIf(function () use ($request, $bankAccounts) {
+                        $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $request->input('payment_sepay_bank_account_id'));
+                        $requiredBanks = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
 
-                    return $selectedBankAccount && in_array($selectedBankAccount['bank']['short_name'], $requiredBanks);
-                }),
-                'nullable',
-                'string',
-                fn() => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
-            ],
-            'payment_sepay_prefix' => [
-                'required',
-                'string',
-                Rule::in(array_column(Arr::get($client->company(), 'configurations.payment_code_formats'), 'prefix')),
-            ],
-        ];
+                        return $selectedBankAccount && in_array($selectedBankAccount['bank']['short_name'], $requiredBanks);
+                    }),
+                    'nullable',
+                    'string',
+                    fn() => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
+                ],
+                'payment_sepay_prefix' => [
+                    'required',
+                    'string',
+                    Rule::in(array_column(Arr::get($client->company(), 'configurations.payment_code_formats'), 'prefix')),
+                ],
+            ];
+        } catch (Exception $e) {
+            return [
+                'payment_sepay_bank_account_id' => ['required', 'string'],
+                'payment_sepay_bank_sub_account_id' => ['nullable', 'string'],
+                'payment_sepay_prefix' => ['required', 'string'],
+            ];
+        }
     }
 
     protected function updateWebhookSettings(): void
