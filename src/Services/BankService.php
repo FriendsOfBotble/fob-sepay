@@ -4,7 +4,6 @@ namespace FriendsOfBotble\SePay\Services;
 
 use Exception;
 use FriendsOfBotble\SePay\SePayClient;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class BankService
@@ -30,26 +29,8 @@ class BankService
         'ocb' => 'OCB',
     ];
 
-    protected const CACHE_KEY = 'sepay_bank_info';
-
-    protected const CACHE_TTL = 86400; // 24 giờ
-
     public function getBankInfo(): array
     {
-        $cachedInfo = Cache::get(self::CACHE_KEY);
-        if ($cachedInfo) {
-            return $cachedInfo;
-        }
-
-        $bankInfo = $this->fetchBankInfo();
-        Cache::put(self::CACHE_KEY, $bankInfo, self::CACHE_TTL);
-
-        return $bankInfo;
-    }
-
-    protected function fetchBankInfo(): array
-    {
-        $client = new SePayClient();
         $bank = $this->banks[get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME)] ?? 'Vietcombank';
         $bankAccountNumber = get_payment_setting('account_number', SEPAY_PAYMENT_METHOD_NAME);
         $bankAccountHolder = get_payment_setting('account_holder', SEPAY_PAYMENT_METHOD_NAME);
@@ -57,6 +38,7 @@ class BankService
         $bankLogo = '';
 
         try {
+            $client = new SePayClient();
             if ($client->isConnected()) {
                 $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
 
@@ -85,9 +67,25 @@ class BankService
                         $bankAccountHolder = $bankSubAccount['account_holder_name'] ?: $bankAccountHolder;
                     }
                 }
+
+                // Lưu thông tin vào settings
+                setting()->set([
+                    'sepay_bank_name' => $bank,
+                    'sepay_bank_short_name' => $bankShortName,
+                    'sepay_bank_account_number' => $bankAccountNumber,
+                    'sepay_bank_account_holder' => $bankAccountHolder,
+                    'sepay_bank_logo' => $bankLogo,
+                ])->save();
             }
         } catch (Exception $e) {
             Log::error('SePay connection error: ' . $e->getMessage());
+            
+            // Lấy thông tin từ settings nếu có
+            $bank = setting('sepay_bank_name', $bank);
+            $bankShortName = setting('sepay_bank_short_name', $bankShortName);
+            $bankAccountNumber = setting('sepay_bank_account_number', $bankAccountNumber);
+            $bankAccountHolder = setting('sepay_bank_account_holder', $bankAccountHolder);
+            $bankLogo = setting('sepay_bank_logo', $bankLogo);
         }
 
         return [
@@ -109,10 +107,5 @@ class BankService
             Log::error('SePay QR code generation error: ' . $e->getMessage());
             return '';
         }
-    }
-
-    public function clearCache(): void
-    {
-        Cache::forget(self::CACHE_KEY);
     }
 }
