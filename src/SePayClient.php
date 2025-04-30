@@ -86,25 +86,44 @@ class SePayClient
 
     public function request(string $method, string $url, array $data = []): array
     {
-        $response = Http::baseUrl('https://my.sepay.vn/api/v1')
-            ->withToken(setting()->get('sepay_access_token'))
-            ->$method($url, $data);
-
-        if ($response->unauthorized()) {
-            $this->refreshToken();
-
+        try {
             $response = Http::baseUrl('https://my.sepay.vn/api/v1')
                 ->withToken(setting()->get('sepay_access_token'))
                 ->$method($url, $data);
+
+            if ($response->unauthorized()) {
+                try {
+                    $this->refreshToken();
+
+                    $response = Http::baseUrl('https://my.sepay.vn/api/v1')
+                        ->withToken(setting()->get('sepay_access_token'))
+                        ->$method($url, $data);
+                } catch (Exception $e) {
+                    setting()->set([
+                        'sepay_access_token' => null,
+                        'sepay_refresh_token' => null,
+                        'sepay_expired_at' => null,
+                        'sepay_connected_at' => null,
+                    ])->save();
+
+                    Cache::forget('sepay.profile');
+                    Cache::forget('sepay.bank-accounts');
+
+                    throw new Exception('Token đã hết hạn. Vui lòng kết nối lại tài khoản SePay.');
+                }
+            }
+
+            $data = $response->json();
+
+            if (isset($data['status']) && $data['status'] !== 'success') {
+                throw new Exception($data['message'] ?? $data['messages']['error'], $response->status());
+            }
+
+            return $data['data'] ?? [];
+        } catch (Exception $e) {
+            Log::error('SePay API error: ' . $e->getMessage());
+            throw $e;
         }
-
-        $data = $response->json();
-
-        if (isset($data['status']) && $data['status'] !== 'success') {
-            throw new Exception($data['message'] ?? $data['messages']['error'], $response->status());
-        }
-
-        return $data['data'] ?? [];
     }
 
     protected function refreshToken(): void
