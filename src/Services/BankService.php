@@ -68,13 +68,12 @@ class BankService
                     }
                 }
 
-                // Lưu thông tin vào settings
                 setting()->set([
-                    'sepay_bank_name' => $bank,
-                    'sepay_bank_short_name' => $bankShortName,
-                    'sepay_bank_account_number' => $bankAccountNumber,
-                    'sepay_bank_account_holder' => $bankAccountHolder,
-                    'sepay_bank_logo' => $bankLogo,
+                    get_payment_setting_key('bank', SEPAY_PAYMENT_METHOD_NAME) => $bank,
+                    get_payment_setting_key('bank_short_name', SEPAY_PAYMENT_METHOD_NAME) => $bankShortName,
+                    get_payment_setting_key('bank_account_number', SEPAY_PAYMENT_METHOD_NAME) => $bankAccountNumber,
+                    get_payment_setting_key('bank_account_holder', SEPAY_PAYMENT_METHOD_NAME) => $bankAccountHolder,
+                    get_payment_setting_key('bank_logo', SEPAY_PAYMENT_METHOD_NAME) => $bankLogo,
                 ])->save();
             }
         } catch (Exception $e) {
