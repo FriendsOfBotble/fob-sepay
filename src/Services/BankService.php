@@ -79,8 +79,7 @@ class BankService
             }
         } catch (Exception $e) {
             Log::error('SePay connection error: ' . $e->getMessage());
-            
-            // Lấy thông tin từ settings nếu có
+
             $bank = setting('sepay_bank_name', $bank);
             $bankShortName = setting('sepay_bank_short_name', $bankShortName);
             $bankAccountNumber = setting('sepay_bank_account_number', $bankAccountNumber);
@@ -100,12 +99,12 @@ class BankService
 
     public function getQrCodeUrl(string $accountNumber, string $bankShortName, float $amount, string $chargeId): string
     {
-        try {
-            $client = new SePayClient();
-            return $client->getQrCodeUrl($accountNumber, $bankShortName, $amount, $chargeId);
-        } catch (Exception $e) {
-            Log::error('SePay QR code generation error: ' . $e->getMessage());
-            return '';
-        }
+        return 'https://qr.sepay.vn/img?' . http_build_query([
+            'acc' => $accountNumber,
+            'bank' => $bankShortName,
+            'amount' => $amount,
+            'des' => $chargeId,
+            'template' => 'compact',
+        ]);
     }
 }
