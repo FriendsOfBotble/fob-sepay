@@ -18,6 +18,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -136,7 +137,7 @@ class HookServiceProvider extends ServiceProvider
             if ($payment->status == PaymentStatusEnum::PENDING) {
                 $orderAmount = $this->calculateOrderAmount($orders);
                 $bankInfo = $this->bankService->getBankInfo();
-                $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['account_number'], $bankInfo['short_name'], $orderAmount, $payment->charge_id);
+                $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['bankAccountNumber'], $bankInfo['bankShortName'], $orderAmount, $payment->charge_id);
 
                 $html .= view('plugins/fob-sepay::bank-info', [
                     'orderAmount' => $orderAmount,
@@ -170,6 +171,7 @@ class HookServiceProvider extends ServiceProvider
             }
 
             $this->updateWebhookSettings();
+            $this->updateBankInfo();
         }, 999);
     }
 
@@ -216,6 +218,52 @@ class HookServiceProvider extends ServiceProvider
                 'payment_sepay_bank_sub_account_id' => ['nullable', 'string'],
                 'payment_sepay_prefix' => ['required', 'string'],
             ];
+        }
+    }
+
+    protected function updateBankInfo(): void
+    {
+        try {
+            $client = new SePayClient();
+            if ($client->isConnected()) {
+                $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
+
+                $bank = match (get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name')) {
+                    'full_name' => $bankAccount->bank['full_name'],
+                    'short_name' => $bankAccount->bank['short_name'],
+                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})",
+                    default => $bank,
+                };
+
+                $bankShortName = $bankAccount->bank['short_name'];
+                $bankAccountNumber = $bankAccount->account_number;
+                $bankAccountHolder = $bankAccount->account_holder_name;
+                $bankLogo = $bankAccount->bank['logo_url'];
+
+                if ($bankSubAccountId = get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
+                    $bankSubAccounts = $client->bankSubAccounts($bankAccount->id);
+
+                    $bankSubAccount = collect($bankSubAccounts)
+                        ->where('bank_account_id', $bankAccount->id)
+                        ->where('id', $bankSubAccountId)
+                        ->first();
+
+                    if ($bankSubAccount) {
+                        $bankAccountNumber = $bankSubAccount['account_number'];
+                        $bankAccountHolder = $bankSubAccount['account_holder_name'] ?: $bankAccountHolder;
+                    }
+                }
+
+                setting()->set([
+                    'payment_sepay_bank' => $bank,
+                    'payment_sepay_bank_short_name' => $bankShortName,
+                    'payment_sepay_bank_account_number' => $bankAccountNumber,
+                    'payment_sepay_bank_account_holder' => $bankAccountHolder,
+                    'payment_sepay_bank_logo' => $bankLogo,
+                ])->save();
+            }
+        } catch (Exception $e) {
+            BaseHelper::logError($e);
         }
     }
 
