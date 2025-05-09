@@ -1,9 +1,17 @@
 $(() => {
     const sepayContainer = $('.sepay-connected-profile')
     const bankSubAccount = $('#payment_sepay_bank_sub_account_id')
+    const unsupportedVirtualAccountBanks = ['TPBank', 'VPBank', 'VietinBank']
 
     const initBankSubAccount = () => {
         const bankAccountId = $('#payment_sepay_bank_account_id').val()
+        const selectedBankText = $('#payment_sepay_bank_account_id option:selected').text()
+        const isUnsupportedBank = unsupportedVirtualAccountBanks.some(bank => selectedBankText.split('-')[0].trim() === bank)
+
+        if (isUnsupportedBank) {
+            bankSubAccount.parent().hide()
+            return
+        }
 
         if (bankAccountId) {
             $.ajax({
@@ -31,8 +39,6 @@ $(() => {
                     if (hasData) {
                         bankSubAccount.parent().show()
                         bankSubAccount.val(sepayContainer.data('bank-sub-account-id'))
-                    } else {
-                        bankSubAccount.parent().hide()
                     }
                 },
             })
@@ -48,7 +54,6 @@ $(() => {
             dataType: 'json',
             success: function (response) {
                 let options = ''
-
 
                 if (response.data.length > 0) {
                     response.data.forEach((paymentCode) => {

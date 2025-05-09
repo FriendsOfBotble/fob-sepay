@@ -18,7 +18,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -212,7 +211,7 @@ class HookServiceProvider extends ServiceProvider
                     Rule::in(array_column(Arr::get($client->company(), 'configurations.payment_code_formats'), 'prefix')),
                 ],
             ];
-        } catch (Exception $e) {
+        } catch (Exception) {
             return [
                 'payment_sepay_bank_account_id' => ['required', 'string'],
                 'payment_sepay_bank_sub_account_id' => ['nullable', 'string'],
@@ -230,12 +229,13 @@ class HookServiceProvider extends ServiceProvider
 
                 $bank = match (get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name')) {
                     'full_name' => $bankAccount->bank['full_name'],
-                    'short_name' => $bankAccount->bank['short_name'],
-                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['short_name']})",
-                    default => $bank,
+                    'short_name' => $bankAccount->bank['brand_name'],
+                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['brand_name']})",
+                    default => $bankAccount->bank['brand_name'],
                 };
 
                 $bankShortName = $bankAccount->bank['short_name'];
+                $bankBrandName = $bankAccount->bank['brand_name'];
                 $bankAccountNumber = $bankAccount->account_number;
                 $bankAccountHolder = $bankAccount->account_holder_name;
                 $bankLogo = $bankAccount->bank['logo_url'];
@@ -257,6 +257,7 @@ class HookServiceProvider extends ServiceProvider
                 setting()->set([
                     'payment_sepay_bank' => $bank,
                     'payment_sepay_bank_short_name' => $bankShortName,
+                    'payment_sepay_bank_brand_name' => $bankBrandName,
                     'payment_sepay_bank_account_number' => $bankAccountNumber,
                     'payment_sepay_bank_account_holder' => $bankAccountHolder,
                     'payment_sepay_bank_logo' => $bankLogo,

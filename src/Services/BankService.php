@@ -2,10 +2,6 @@
 
 namespace FriendsOfBotble\SePay\Services;
 
-use Exception;
-use FriendsOfBotble\SePay\SePayClient;
-use Illuminate\Support\Facades\Log;
-
 class BankService
 {
     protected array $banks = [
@@ -35,6 +31,7 @@ class BankService
             'bank' => get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME) ?? 'Vietcombank',
             'bankLogo' => get_payment_setting('bank_logo', SEPAY_PAYMENT_METHOD_NAME),
             'bankShortName' => get_payment_setting('bank_short_name', SEPAY_PAYMENT_METHOD_NAME),
+            'bankBrandName' => get_payment_setting('bank_brand_name', SEPAY_PAYMENT_METHOD_NAME),
             'bankAccountNumber' => get_payment_setting('bank_account_number', SEPAY_PAYMENT_METHOD_NAME),
             'bankAccountHolder' => get_payment_setting('bank_account_holder', SEPAY_PAYMENT_METHOD_NAME),
         ];

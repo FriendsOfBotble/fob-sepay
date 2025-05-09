@@ -111,6 +111,7 @@ class SePayClient
             return $data['data'] ?? [];
         } catch (Exception $e) {
             Log::error('SePay API error: ' . $e->getMessage());
+
             throw $e;
         }
     }
