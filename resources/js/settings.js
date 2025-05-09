@@ -8,6 +8,8 @@ $(() => {
         const selectedBankText = $('#payment_sepay_bank_account_id option:selected').text()
         const isUnsupportedBank = unsupportedVirtualAccountBanks.some(bank => selectedBankText.split('-')[0].trim() === bank)
 
+        console.log(isUnsupportedBank)
+
         if (isUnsupportedBank) {
             bankSubAccount.parent().hide()
             return
