@@ -196,17 +196,6 @@
                                     Kết nối với SePay ngay
                                 </x-core::button>
                             </div>
-
-                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                <a href="{{ Arr::get($formOptions, 'sepayDocsUrl', '#') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                                    <x-core::icon name="ti ti-book" class="me-1" />
-                                    Tài liệu hướng dẫn
-                                </a>
-                                <a href="{{ Arr::get($formOptions, 'sepaySupportUrl', '#') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
-                                    <x-core::icon name="ti ti-help-circle" class="me-1" />
-                                    Hỗ trợ kỹ thuật
-                                </a>
-                            </div>
                         </div>
                     @endif
                 </x-core::table.body.cell>
