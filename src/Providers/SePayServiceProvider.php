@@ -9,11 +9,6 @@ class SePayServiceProvider extends ServiceProvider
 {
     use LoadAndPublishDataTrait;
 
-    public function register(): void
-    {
-        $this->setNamespace('plugins/fob-sepay');
-    }
-
     public function boot(): void
     {
         if (! is_plugin_active('payment')) {
@@ -21,11 +16,12 @@ class SePayServiceProvider extends ServiceProvider
         }
 
         $this
+            ->setNamespace('plugins/fob-sepay')
             ->loadRoutes()
             ->loadAndPublishViews()
             ->loadHelpers()
             ->publishAssets();
 
-        $this->app->register(HookServiceProvider::class);
+        $this->app->booted(fn() => $this->app->register(HookServiceProvider::class));
     }
 }
