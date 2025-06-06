@@ -5,5 +5,5 @@ if (! defined('SEPAY_PAYMENT_METHOD_NAME')) {
 }
 
 if (! defined('SEPAY_FOB_URL')) {
-    define('SEPAY_FOB_URL', 'https://my.sepay.vn');
+    define('SEPAY_FOB_URL', 'https://friendsofbotble.com');
 }
