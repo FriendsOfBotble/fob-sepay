@@ -76,7 +76,9 @@ class SePayClient
     public function request(string $method, string $url, array $data = []): array
     {
         try {
-            $response = Http::baseUrl('https://my.sepay.vn/api/v1')
+            $baseUrl = SEPAY_FOB_URL . '/api/v1';
+
+            $response = Http::baseUrl($baseUrl)
                 ->withToken(setting()->get('sepay_access_token'))
                 ->$method($url, $data);
 
@@ -84,7 +86,7 @@ class SePayClient
                 try {
                     $this->refreshToken();
 
-                    $response = Http::baseUrl('https://my.sepay.vn/api/v1')
+                    $response = Http::baseUrl($baseUrl)
                         ->withToken(setting()->get('sepay_access_token'))
                         ->$method($url, $data);
                 } catch (Exception $e) {
