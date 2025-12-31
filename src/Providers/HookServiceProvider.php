@@ -154,7 +154,7 @@ class HookServiceProvider extends ServiceProvider
     protected function registerRequestRules(): void
     {
         add_filter('core_request_rules', function (array $rules, Request $request) {
-            if ($request instanceof PaymentMethodRequest) {
+            if ($request instanceof PaymentMethodRequest && $request->post('type') === SEPAY_PAYMENT_METHOD_NAME) {
                 $rules = array_merge($rules, $this->getPaymentMethodRules($request));
             }
 
