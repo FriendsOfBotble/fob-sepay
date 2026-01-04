@@ -22,6 +22,6 @@ class SePayServiceProvider extends ServiceProvider
             ->loadHelpers()
             ->publishAssets();
 
-        $this->app->booted(fn() => $this->app->register(HookServiceProvider::class));
+        $this->app->booted(fn () => $this->app->register(HookServiceProvider::class));
     }
 }

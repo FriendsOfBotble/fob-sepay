@@ -37,6 +37,9 @@ class WebhookController
         do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
             'charge_id' => $payment->charge_id,
             'order_id' => $payment->order_id,
+            'customer_id' => $payment->customer_id,
+            'customer_type' => $payment->customer_type,
+            'payment_channel' => $payment->payment_channel?->getValue(),
             'status' => PaymentStatusEnum::COMPLETED,
             'amount' => $payment->amount,
         ], $request);

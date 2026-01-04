@@ -12,7 +12,9 @@ use Illuminate\Http\Request;
 
 class SePayController extends BaseController
 {
-    public function __construct(protected SePayClient $client) {}
+    public function __construct(protected SePayClient $client)
+    {
+    }
 
     public function bankSubAccounts(Request $request): BaseHttpResponse
     {
@@ -22,7 +24,7 @@ class SePayController extends BaseController
 
         try {
             $bankSubAccounts = collect($this->client->bankSubAccounts($request->input('bank_account_id')))
-                ->mapWithKeys(fn($item) => [
+                ->mapWithKeys(fn ($item) => [
                     $item['id'] => "{$item['account_number']}" . ($item['account_holder_name'] ? " - {$item['account_holder_name']}" : ''),
                 ])->all();
 

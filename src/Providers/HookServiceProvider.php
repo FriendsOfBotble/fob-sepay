@@ -203,7 +203,7 @@ class HookServiceProvider extends ServiceProvider
                     }),
                     'nullable',
                     'string',
-                    fn() => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
+                    fn () => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
                 ],
                 'payment_sepay_prefix' => [
                     'required',

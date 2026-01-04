@@ -30,13 +30,13 @@ class SePayPaymentMethodForm extends PaymentMethodForm
                     $form->setData('profile', $client->profile());
 
                     $bankAccounts = collect($client->bankAccounts())
-                        ->mapWithKeys(fn($item) => [
+                        ->mapWithKeys(fn ($item) => [
                             $item['id'] => $item['bank']['short_name'] . ' - ' . $item['account_number'] . ' - ' . $item['account_holder_name'],
                         ])->all();
 
                     $company = $client->company();
                     $paymentCodePrefixes = collect(data_get($company, 'configurations.payment_code_formats', []))
-                        ->mapWithKeys(fn($item) => [$item['prefix'] => $item['prefix']])
+                        ->mapWithKeys(fn ($item) => [$item['prefix'] => $item['prefix']])
                         ->all();
 
                     $form
