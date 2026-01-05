@@ -27,13 +27,15 @@ class BankService
 
     public function getBankInfo(): array
     {
+        // Use setting() directly for bank identifiers to avoid Language plugin's
+        // locale filtering that affects keys containing "name"
         return [
-            'bank' => get_payment_setting('bank', SEPAY_PAYMENT_METHOD_NAME) ?? 'Vietcombank',
-            'bankLogo' => get_payment_setting('bank_logo', SEPAY_PAYMENT_METHOD_NAME),
-            'bankShortName' => get_payment_setting('bank_short_name', SEPAY_PAYMENT_METHOD_NAME),
-            'bankBrandName' => get_payment_setting('bank_brand_name', SEPAY_PAYMENT_METHOD_NAME),
-            'bankAccountNumber' => get_payment_setting('bank_account_number', SEPAY_PAYMENT_METHOD_NAME),
-            'bankAccountHolder' => get_payment_setting('bank_account_holder', SEPAY_PAYMENT_METHOD_NAME),
+            'bank' => setting('payment_sepay_bank') ?? 'Vietcombank',
+            'bankLogo' => setting('payment_sepay_bank_logo'),
+            'bankShortName' => setting('payment_sepay_bank_short_name'),
+            'bankBrandName' => setting('payment_sepay_bank_brand_name'),
+            'bankAccountNumber' => setting('payment_sepay_bank_account_number'),
+            'bankAccountHolder' => setting('payment_sepay_bank_account_holder'),
         ];
     }
 

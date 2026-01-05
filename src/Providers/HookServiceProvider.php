@@ -22,6 +22,7 @@ use Illuminate\Validation\Rule;
 class HookServiceProvider extends ServiceProvider
 {
     protected BankService $bankService;
+    
     protected PaymentService $paymentService;
 
     public function __construct($app)
@@ -134,8 +135,14 @@ class HookServiceProvider extends ServiceProvider
             }
 
             if ($payment->status == PaymentStatusEnum::PENDING) {
-                $orderAmount = $this->calculateOrderAmount($orders);
                 $bankInfo = $this->bankService->getBankInfo();
+
+                // Validate required bank settings are configured
+                if (empty($bankInfo['bankAccountNumber']) || empty($bankInfo['bankShortName'])) {
+                    return $html;
+                }
+
+                $orderAmount = $this->calculateOrderAmount($orders);
                 $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['bankAccountNumber'], $bankInfo['bankShortName'], $orderAmount, $payment->charge_id);
 
                 $html .= view('plugins/fob-sepay::bank-info', [
