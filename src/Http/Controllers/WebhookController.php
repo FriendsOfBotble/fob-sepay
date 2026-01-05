@@ -13,17 +13,42 @@ class WebhookController
     {
         do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
 
+        $content = $request->input('content', '');
+        $transferAmount = (float) $request->input('transferAmount');
+
         $payment = Payment::query()
-            ->where('charge_id', $request->input('code'))
             ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
-            ->where('amount', $request->input('transferAmount'))
+            ->where(function ($query) use ($content) {
+                $query->whereRaw('? LIKE CONCAT("%", charge_id, "%")', [$content])
+                    ->orWhere('charge_id', $content);
+            })
             ->first();
 
         if (! $payment) {
-            return response()->json(['success' => false]);
+            return response()->json([
+                'success' => false,
+                'message' => 'payment not found.',
+            ], 400);
         }
 
-        do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
+        $expectedAmount = $payment->amount;
+
+        if ($payment->currency !== 'VND') {
+            $vndCurrency = get_all_currencies()->firstWhere('title', 'VND');
+
+            if ($vndCurrency) {
+                $expectedAmount = round($payment->amount * $vndCurrency->exchange_rate);
+            }
+        }
+
+        $tolerance = 1000;
+
+        if ($transferAmount < ($expectedAmount - $tolerance)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'insufficient amount.',
+            ], 400);
+        }
 
         if ($payment->status == PaymentStatusEnum::COMPLETED) {
             return response()->json(['success' => true]);
