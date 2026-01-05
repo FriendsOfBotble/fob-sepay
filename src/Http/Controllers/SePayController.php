@@ -4,7 +4,6 @@ namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
-use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
 use Exception;
 use FriendsOfBotble\SePay\SePayClient;
@@ -57,20 +56,33 @@ class SePayController extends BaseController
 
     public function checkTransaction(Request $request): BaseHttpResponse
     {
-        $request->validate([
-            'charge_id' => ['required', 'string'],
-        ]);
-
-        $payment = Payment::query()
-            ->where('charge_id', $request->input('charge_id'))
-            ->whereIn('status', [PaymentStatusEnum::PENDING, PaymentStatusEnum::COMPLETED])
-            ->firstOrFail();
-
-        return $this
-            ->httpResponse()
-            ->setData([
-                'status' => $payment->status,
-                'status_html' => $payment->status->toHtml(),
+        try {
+            $request->validate([
+                'charge_id' => ['required', 'string'],
             ]);
+
+            $payment = Payment::query()
+                ->where('charge_id', $request->input('charge_id'))
+                ->first();
+
+            if (! $payment) {
+                return $this
+                    ->httpResponse()
+                    ->setError()
+                    ->setMessage('Payment not found');
+            }
+
+            return $this
+                ->httpResponse()
+                ->setData([
+                    'status' => $payment->status,
+                    'status_html' => $payment->status->toHtml(),
+                ]);
+        } catch (Exception $e) {
+            return $this
+                ->httpResponse()
+                ->setError()
+                ->setMessage($e->getMessage());
+        }
     }
 }
