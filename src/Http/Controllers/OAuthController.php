@@ -13,7 +13,9 @@ class OAuthController extends BaseController
     {
         $state = bin2hex(random_bytes(16));
 
-        session()->put('sepay_oauth_state', $state);
+        // The OAuth callback is a server-to-server request without the admin's session,
+        // so the state is kept in the cache to bind the callback to this connect attempt.
+        Cache::put($this->stateCacheKey($state), true, now()->addMinutes(15));
 
         $queryParams = http_build_query([
             'callback_url' => route('sepay.oauth.callback'),
@@ -35,6 +37,10 @@ class OAuthController extends BaseController
 
         if (! $verifySignatureAction($validated)) {
             return response()->json(['error' => 'Invalid signature'], 400);
+        }
+
+        if (! Cache::pull($this->stateCacheKey($validated['state']))) {
+            return response()->json(['error' => 'Invalid state'], 400);
         }
 
         setting()->set([
@@ -74,5 +80,10 @@ class OAuthController extends BaseController
             ->httpResponse()
             ->setMessage('Ngắt kết nối với SePay thành công')
             ->setData(['success' => true]);
+    }
+
+    protected function stateCacheKey(string $state): string
+    {
+        return 'sepay.oauth-state.' . hash('sha256', $state);
     }
 }

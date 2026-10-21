@@ -62,6 +62,7 @@ class SePayController extends BaseController
             ]);
 
             $payment = Payment::query()
+                ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
                 ->where('charge_id', $request->input('charge_id'))
                 ->first();
 
