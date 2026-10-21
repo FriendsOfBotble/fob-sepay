@@ -64,6 +64,7 @@
                                 data-get-payment-codes-url="{{ route('sepay.payment-codes') }}"
                                 data-bank-sub-account-id="{{ get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME) }}"
                                 data-payment-code-prefix="{{ get_payment_setting('prefix', SEPAY_PAYMENT_METHOD_NAME) }}"
+                                data-virtual-account-required-banks="{{ json_encode(\FriendsOfBotble\SePay\Services\BankService::VIRTUAL_ACCOUNT_REQUIRED_BANKS) }}"
                             >
                                 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                     <span class="avatar avatar-lg" style="background-image: url({{ $profile->avatar }});"></span>

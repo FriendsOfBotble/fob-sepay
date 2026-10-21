@@ -167,6 +167,15 @@ class HookServiceProvider extends ServiceProvider
 
             return $rules;
         }, 999, 2);
+
+        add_filter('core_request_messages', function (array $messages, Request $request) {
+            if ($request instanceof PaymentMethodRequest && $request->post('type') === SEPAY_PAYMENT_METHOD_NAME) {
+                $messages['payment_sepay_bank_sub_account_id.required'] = 'Ngân hàng này (BIDV, MSB, KienLongBank, OCB) chỉ nhận giao dịch qua tài khoản ảo (VA). Vui lòng tạo tài khoản ảo trên my.sepay.vn, sau đó chọn ở mục "Tài khoản ảo".';
+                $messages['payment_sepay_bank_sub_account_id.in'] = 'Tài khoản ảo đã chọn không thuộc tài khoản ngân hàng này. Vui lòng chọn lại.';
+            }
+
+            return $messages;
+        }, 999, 2);
     }
 
     protected function registerAfterUpdateSettings(): void
@@ -198,20 +207,20 @@ class HookServiceProvider extends ServiceProvider
         try {
             $client = new SePayClient();
             $bankAccounts = $client->bankAccounts();
+            $bankAccountId = $request->input('payment_sepay_bank_account_id');
+            $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $bankAccountId);
+            $requiresVirtualAccount = $selectedBankAccount
+                && BankService::requiresVirtualAccount(Arr::get($selectedBankAccount, 'bank.short_name'));
+
+            $subAccountRules = [Rule::requiredIf($requiresVirtualAccount), 'nullable', 'string'];
+
+            if ($selectedBankAccount && $request->filled('payment_sepay_bank_sub_account_id')) {
+                $subAccountRules[] = Rule::in(array_column($client->bankSubAccounts((int) $bankAccountId), 'id'));
+            }
 
             return [
                 'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($bankAccounts, 'id'))],
-                'payment_sepay_bank_sub_account_id' => [
-                    Rule::requiredIf(function () use ($request, $bankAccounts) {
-                        $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $request->input('payment_sepay_bank_account_id'));
-                        $requiredBanks = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
-
-                        return $selectedBankAccount && in_array($selectedBankAccount['bank']['short_name'], $requiredBanks);
-                    }),
-                    'nullable',
-                    'string',
-                    fn () => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
-                ],
+                'payment_sepay_bank_sub_account_id' => $subAccountRules,
                 'payment_sepay_prefix' => [
                     'required',
                     'string',
