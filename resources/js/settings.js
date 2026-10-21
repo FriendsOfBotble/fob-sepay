@@ -1,6 +1,6 @@
 $(() => {
     const sepayContainer = $('.sepay-connected-profile')
-    const bankSubAccount = $('#payment_sepay_bank_sub_account_id')
+    const bankSubAccount = $('select[name="payment_sepay_bank_sub_account_id"]')
     const unsupportedVirtualAccountBanks = ['TPBank', 'VPBank', 'VietinBank']
     const virtualAccountRequiredBanks = (sepayContainer.data('virtual-account-required-banks') || []).map((bank) =>
         bank.toLowerCase()
@@ -8,7 +8,7 @@ $(() => {
     const emptyOption = '<option value="">-- Chọn tài khoản ảo --</option>'
 
     const selectedBankName = () =>
-        $('#payment_sepay_bank_account_id option:selected').text().split('-')[0].trim()
+        $('select[name="payment_sepay_bank_account_id"] option:selected').text().split('-')[0].trim()
 
     const showSubAccountHint = (message, isError = false) => {
         let hint = bankSubAccount.parent().find('.sepay-sub-account-hint')
@@ -23,7 +23,7 @@ $(() => {
     }
 
     const initBankSubAccount = () => {
-        const bankAccountId = $('#payment_sepay_bank_account_id').val()
+        const bankAccountId = $('select[name="payment_sepay_bank_account_id"]').val()
         const bankName = selectedBankName()
         const isUnsupportedBank = unsupportedVirtualAccountBanks.includes(bankName)
         const requiresVirtualAccount = virtualAccountRequiredBanks.includes(bankName.toLowerCase())
@@ -107,8 +107,8 @@ $(() => {
                     })
                 }
 
-                $('#payment_sepay_prefix').html(options)
-                $('#payment_sepay_prefix').val(sepayContainer.data('payment-code-prefix'))
+                $('select[name="payment_sepay_prefix"]').html(options)
+                $('select[name="payment_sepay_prefix"]').val(sepayContainer.data('payment-code-prefix'))
             },
         })
     }
@@ -120,7 +120,7 @@ $(() => {
     initBankSubAccount()
     initPaymentCodePrefixes()
 
-    $(document).on('change', '#payment_sepay_bank_account_id', () => {
+    $(document).on('change', 'select[name="payment_sepay_bank_account_id"]', () => {
         initBankSubAccount()
     })
 })
