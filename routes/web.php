@@ -21,8 +21,7 @@ Route::prefix('sepay')->name('sepay.')->group(function () {
         ->middleware(SePayProtector::class);
 
     Route::post('transactions/check', [SePayController::class, 'checkTransaction'])
-        ->name('transactions.check')
-        ->middleware('throttle:60,1');
+        ->name('transactions.check');
 
     AdminHelper::registerRoutes(function () {
         Route::group(['permission' => 'payments.settings'], function () {

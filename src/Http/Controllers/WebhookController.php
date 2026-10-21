@@ -24,6 +24,9 @@ class WebhookController
 
         $payment = Payment::query()
             ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
+            // An empty charge_id would turn the LIKE below into '%%' and match every transfer.
+            ->whereNotNull('charge_id')
+            ->where('charge_id', '!=', '')
             ->where(function ($query) use ($content): void {
                 $query
                     ->where('charge_id', $content)

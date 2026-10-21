@@ -11,7 +11,8 @@ Tất cả thay đổi của `fob-sepay` sẽ được mô tả trong file này
 - Sửa lỗi: Middleware webhook trả về lỗi 500 thay vì 401 khi thiếu header `Authorization`
 - Sửa lỗi: Route admin của SePay bị chặn với tài khoản admin không phải super admin
 - Sửa lỗi: Mã thanh toán có thể trùng khi nhiều đơn hàng được tạo cùng lúc
-- Kiểm tra trạng thái giao dịch chỉ áp dụng cho thanh toán SePay và có giới hạn tần suất
+- Kiểm tra trạng thái giao dịch chỉ áp dụng cho thanh toán SePay
+- Webhook bỏ qua thanh toán có mã rỗng (trước đây có thể khớp với mọi giao dịch)
 
 ## 2.0.4 - 2025-12-31
 
