@@ -2,7 +2,7 @@
 
 Tất cả thay đổi của `fob-sepay` sẽ được mô tả trong file này
 
-## 2.0.10 - 2026-10-21
+## 2.1.0 - 2026-10-21
 
 - Bảo mật: Chuyển route kết nối/ngắt kết nối OAuth vào khu vực admin (yêu cầu quyền `payments.settings`); trước đây khách truy cập có thể ngắt kết nối SePay của cửa hàng
 - Bảo mật: OAuth callback chỉ chấp nhận `state` được tạo từ lần kết nối của admin

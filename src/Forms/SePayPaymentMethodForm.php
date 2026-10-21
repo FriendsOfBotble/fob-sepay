@@ -14,7 +14,7 @@ class SePayPaymentMethodForm extends PaymentMethodForm
 {
     public function setup(): void
     {
-        Assets::addScriptsDirectly('vendor/core/plugins/fob-sepay/js/settings.js?v=2.0.10');
+        Assets::addScriptsDirectly('vendor/core/plugins/fob-sepay/js/settings.js?v=2.1.0');
 
         $client = new SePayClient();
 
