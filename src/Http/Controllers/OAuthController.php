@@ -3,6 +3,7 @@
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
+use Botble\Setting\Models\Setting;
 use FriendsOfBotble\SePay\Actions\VerifySignatureAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -13,7 +14,12 @@ class OAuthController extends BaseController
     {
         $state = bin2hex(random_bytes(16));
 
-        session()->put('sepay_oauth_state', $state);
+        // The OAuth callback is a server-to-server request without the admin's session and may land on
+        // another node, so a hash of the state is kept in the shared settings table to bind it to this attempt.
+        setting()->set('sepay_oauth_state', json_encode([
+            'hash' => $this->stateHash($state),
+            'expires_at' => now()->addMinutes(15)->getTimestamp(),
+        ]))->save();
 
         $queryParams = http_build_query([
             'callback_url' => route('sepay.oauth.callback'),
@@ -35,6 +41,10 @@ class OAuthController extends BaseController
 
         if (! $verifySignatureAction($validated)) {
             return response()->json(['error' => 'Invalid signature'], 400);
+        }
+
+        if (! $this->consumeState($validated['state'])) {
+            return response()->json(['error' => 'Invalid state'], 400);
         }
 
         setting()->set([
@@ -74,5 +84,27 @@ class OAuthController extends BaseController
             ->httpResponse()
             ->setMessage('Ngắt kết nối với SePay thành công')
             ->setData(['success' => true]);
+    }
+
+    protected function consumeState(string $state): bool
+    {
+        // Read the table directly: a cached settings copy on this node may predate the connect request.
+        $stored = json_decode((string) Setting::query()->where('key', 'sepay_oauth_state')->value('value'), true);
+
+        $valid = is_array($stored)
+            && isset($stored['hash'], $stored['expires_at'])
+            && $stored['expires_at'] >= now()->getTimestamp()
+            && hash_equals($stored['hash'], $this->stateHash($state));
+
+        if ($valid) {
+            setting()->set('sepay_oauth_state', null)->save();
+        }
+
+        return $valid;
+    }
+
+    protected function stateHash(string $state): string
+    {
+        return hash('sha256', $state);
     }
 }

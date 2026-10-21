@@ -12,7 +12,7 @@ class SePayProtector
     public function handle(Request $request, Closure $next): Response
     {
         $apiKey = $this->apiToken($request);
-        $storedApiKey = setting('sepay_api_key');
+        $storedApiKey = (string) setting('sepay_api_key');
 
         if (
             ! $apiKey
@@ -25,16 +25,14 @@ class SePayProtector
         return $next($request);
     }
 
-    public function apiToken(Request $request): string
+    public function apiToken(Request $request): ?string
     {
-        $header = $request->header('Authorization', '');
+        $header = (string) $request->header('Authorization', '');
 
-        if (! str_contains($header, 'Apikey ')) {
-            return false;
+        if (! str_starts_with($header, 'Apikey ')) {
+            return null;
         }
 
-        $apiKey = str_replace('Apikey ', '', $header);
-
-        return trim($apiKey);
+        return trim(substr($header, strlen('Apikey '))) ?: null;
     }
 }

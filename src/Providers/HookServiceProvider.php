@@ -167,6 +167,15 @@ class HookServiceProvider extends ServiceProvider
 
             return $rules;
         }, 999, 2);
+
+        add_filter('core_request_messages', function (array $messages, Request $request) {
+            if ($request instanceof PaymentMethodRequest && $request->post('type') === SEPAY_PAYMENT_METHOD_NAME) {
+                $messages['payment_sepay_bank_sub_account_id.required'] = 'Ngân hàng này (BIDV, MSB, KienLongBank, OCB) chỉ nhận giao dịch qua tài khoản ảo (VA). Vui lòng tạo tài khoản ảo trên my.sepay.vn, sau đó chọn ở mục "Tài khoản ảo".';
+                $messages['payment_sepay_bank_sub_account_id.in'] = 'Tài khoản ảo đã chọn không thuộc tài khoản ngân hàng này. Vui lòng chọn lại.';
+            }
+
+            return $messages;
+        }, 999, 2);
     }
 
     protected function registerAfterUpdateSettings(): void
@@ -198,20 +207,20 @@ class HookServiceProvider extends ServiceProvider
         try {
             $client = new SePayClient();
             $bankAccounts = $client->bankAccounts();
+            $bankAccountId = $request->input('payment_sepay_bank_account_id');
+            $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $bankAccountId);
+            $requiresVirtualAccount = $selectedBankAccount
+                && BankService::requiresVirtualAccount(Arr::get($selectedBankAccount, 'bank.short_name'));
+
+            $subAccountRules = [Rule::requiredIf($requiresVirtualAccount), 'nullable', 'string'];
+
+            if ($selectedBankAccount && $request->filled('payment_sepay_bank_sub_account_id')) {
+                $subAccountRules[] = Rule::in(array_column($client->bankSubAccounts((int) $bankAccountId), 'id'));
+            }
 
             return [
                 'payment_sepay_bank_account_id' => ['required', 'string', Rule::in(array_column($bankAccounts, 'id'))],
-                'payment_sepay_bank_sub_account_id' => [
-                    Rule::requiredIf(function () use ($request, $bankAccounts) {
-                        $selectedBankAccount = collect($bankAccounts)->firstWhere('id', $request->input('payment_sepay_bank_account_id'));
-                        $requiredBanks = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
-
-                        return $selectedBankAccount && in_array($selectedBankAccount['bank']['short_name'], $requiredBanks);
-                    }),
-                    'nullable',
-                    'string',
-                    fn () => Rule::in(array_column($client->bankSubAccounts($request->get('payment_sepay_bank_account_id')), 'id')),
-                ],
+                'payment_sepay_bank_sub_account_id' => $subAccountRules,
                 'payment_sepay_prefix' => [
                     'required',
                     'string',
@@ -234,15 +243,16 @@ class HookServiceProvider extends ServiceProvider
             if ($client->isConnected()) {
                 $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
 
+                // `brand_name` isn't in SePay's documented bank fields, so fall back to the short name.
+                $bankBrandName = $bankAccount->bank['brand_name'] ?? $bankAccount->bank['short_name'];
+                $bankShortName = $bankAccount->bank['short_name'];
+
                 $bank = match (get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name')) {
                     'full_name' => $bankAccount->bank['full_name'],
-                    'short_name' => $bankAccount->bank['brand_name'],
-                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['brand_name']})",
-                    default => $bankAccount->bank['brand_name'],
+                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankBrandName})",
+                    default => $bankBrandName,
                 };
 
-                $bankShortName = $bankAccount->bank['short_name'];
-                $bankBrandName = $bankAccount->bank['brand_name'];
                 $bankAccountNumber = $bankAccount->account_number;
                 $bankAccountHolder = $bankAccount->account_holder_name;
                 $bankLogo = $bankAccount->bank['logo_url'];
@@ -250,8 +260,8 @@ class HookServiceProvider extends ServiceProvider
                 if ($bankSubAccountId = get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
                     $bankSubAccounts = $client->bankSubAccounts($bankAccount->id);
 
+                    // The endpoint only returns this account's VAs, so don't depend on an undocumented bank_account_id field.
                     $bankSubAccount = collect($bankSubAccounts)
-                        ->where('bank_account_id', $bankAccount->id)
                         ->where('id', $bankSubAccountId)
                         ->first();
 

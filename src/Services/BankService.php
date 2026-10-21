@@ -4,6 +4,16 @@ namespace FriendsOfBotble\SePay\Services;
 
 class BankService
 {
+    /**
+     * SePay only receives transactions for these banks through a virtual account (VA).
+     */
+    public const VIRTUAL_ACCOUNT_REQUIRED_BANKS = ['BIDV', 'MSB', 'KienLongBank', 'OCB'];
+
+    public static function requiresVirtualAccount(?string $bankShortName): bool
+    {
+        return in_array(strtolower((string) $bankShortName), array_map('strtolower', static::VIRTUAL_ACCOUNT_REQUIRED_BANKS), true);
+    }
+
     protected array $banks = [
         'vietcombank' => 'Vietcombank',
         'vpbank' => 'VPBank',
@@ -44,7 +54,7 @@ class BankService
         return 'https://qr.sepay.vn/img?' . http_build_query([
             'acc' => $accountNumber,
             'bank' => $bankShortName,
-            'amount' => $amount,
+            'amount' => (int) round($amount),
             'des' => $chargeId,
             'template' => 'compact',
         ]);
