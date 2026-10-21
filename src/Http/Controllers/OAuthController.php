@@ -3,9 +3,9 @@
 namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
+use Botble\Setting\Models\Setting;
 use FriendsOfBotble\SePay\Actions\VerifySignatureAction;
 use Illuminate\Http\Request;
-use Botble\Setting\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 
 class OAuthController extends BaseController
