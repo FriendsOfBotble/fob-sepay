@@ -19,14 +19,22 @@ class WebhookController
     {
         do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
 
-        $content = $request->input('content', '');
+        $content = (string) $request->input('content', '');
+        $code = (string) $request->input('code', '');
         $transferAmount = (float) $request->input('transferAmount');
 
-        $payment = Payment::query()
+        $payments = Payment::query()
             ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
             // An empty charge_id would turn the LIKE below into '%%' and match every transfer.
             ->whereNotNull('charge_id')
-            ->where('charge_id', '!=', '')
+            ->where('charge_id', '!=', '');
+
+        // SePay detects the payment code itself and sends it as `code`; fall back to the transfer content.
+        $payment = $code !== ''
+            ? (clone $payments)->where('charge_id', $code)->first()
+            : null;
+
+        $payment ??= $payments
             ->where(function ($query) use ($content): void {
                 $query
                     ->where('charge_id', $content)

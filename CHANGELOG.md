@@ -15,6 +15,8 @@ Tất cả thay đổi của `fob-sepay` sẽ được mô tả trong file này
 - Webhook bỏ qua thanh toán có mã rỗng (trước đây có thể khớp với mọi giao dịch)
 - Sửa lỗi: Không kích hoạt được SePay với BIDV, MSB, KienLongBank, OCB ("The payment sepay bank sub account id field is required") do ô "Tài khoản ảo" bị ẩn khi chưa có tài khoản ảo hoặc tải danh sách lỗi. Ô này luôn hiển thị kèm hướng dẫn tạo VA, và thông báo lỗi rõ ràng hơn
 - Sửa lỗi: Kiểm tra tài khoản ảo đã chọn có thuộc tài khoản ngân hàng (trước đây quy tắc không có tác dụng)
+- Webhook ưu tiên đối chiếu theo trường `code` (mã thanh toán SePay nhận diện), chấp nhận `code` rỗng theo tài liệu SePay
+- Mã QR dùng số tiền nguyên; dùng tên ngắn của ngân hàng khi API không trả `brand_name`
 
 ## 2.0.4 - 2025-12-31
 

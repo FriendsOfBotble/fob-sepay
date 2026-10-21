@@ -54,7 +54,7 @@ class BankService
         return 'https://qr.sepay.vn/img?' . http_build_query([
             'acc' => $accountNumber,
             'bank' => $bankShortName,
-            'amount' => $amount,
+            'amount' => (int) round($amount),
             'des' => $chargeId,
             'template' => 'compact',
         ]);

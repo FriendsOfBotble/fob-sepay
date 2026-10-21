@@ -13,7 +13,7 @@ class WebhookRequest extends Request
             'gateway' => ['required', 'string'],
             'transactionDate' => ['required', 'string', 'date'],
             'accountNumber' => ['required', 'string'],
-            'code' => ['required', 'string'],
+            'code' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'transferType' => ['required', 'string', 'in:in'],
             'transferAmount' => ['required', 'numeric'],

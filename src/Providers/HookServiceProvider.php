@@ -243,15 +243,16 @@ class HookServiceProvider extends ServiceProvider
             if ($client->isConnected()) {
                 $bankAccount = $client->bankAccount(get_payment_setting('bank_account_id', SEPAY_PAYMENT_METHOD_NAME));
 
+                // `brand_name` isn't in SePay's documented bank fields, so fall back to the short name.
+                $bankBrandName = $bankAccount->bank['brand_name'] ?? $bankAccount->bank['short_name'];
+                $bankShortName = $bankAccount->bank['short_name'];
+
                 $bank = match (get_payment_setting('bank_display', SEPAY_PAYMENT_METHOD_NAME, 'short_name')) {
                     'full_name' => $bankAccount->bank['full_name'],
-                    'short_name' => $bankAccount->bank['brand_name'],
-                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankAccount->bank['brand_name']})",
-                    default => $bankAccount->bank['brand_name'],
+                    'full_name_short_name' => "{$bankAccount->bank['full_name']} ({$bankBrandName})",
+                    default => $bankBrandName,
                 };
 
-                $bankShortName = $bankAccount->bank['short_name'];
-                $bankBrandName = $bankAccount->bank['brand_name'];
                 $bankAccountNumber = $bankAccount->account_number;
                 $bankAccountHolder = $bankAccount->account_holder_name;
                 $bankLogo = $bankAccount->bank['logo_url'];
@@ -259,8 +260,8 @@ class HookServiceProvider extends ServiceProvider
                 if ($bankSubAccountId = get_payment_setting('bank_sub_account_id', SEPAY_PAYMENT_METHOD_NAME)) {
                     $bankSubAccounts = $client->bankSubAccounts($bankAccount->id);
 
+                    // The endpoint only returns this account's VAs, so don't depend on an undocumented bank_account_id field.
                     $bankSubAccount = collect($bankSubAccounts)
-                        ->where('bank_account_id', $bankAccount->id)
                         ->where('id', $bankSubAccountId)
                         ->first();
 
