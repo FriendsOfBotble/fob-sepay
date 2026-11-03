@@ -134,6 +134,9 @@ class HookServiceProvider extends ServiceProvider
                 return $html;
             }
 
+            // The first order's payment may be cancelled while other vendors' orders still await this transfer.
+            $payment = $this->paymentService->chargeStatusPayment((string) $payment->charge_id) ?? $payment;
+
             if ($payment->status == PaymentStatusEnum::PENDING) {
                 $bankInfo = $this->bankService->getBankInfo();
 

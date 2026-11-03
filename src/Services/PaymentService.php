@@ -35,10 +35,28 @@ class PaymentService
      */
     public function pendingPaymentsByChargeId(string $chargeId): Builder
     {
+        return $this->paymentsByChargeId($chargeId)->where('status', PaymentStatusEnum::PENDING);
+    }
+
+    /**
+     * The payment that represents the whole charge. The charge awaits payment while any row
+     * is pending, and is paid once none is pending and one is completed, so a cancelled
+     * vendor order can't hide the state of the others.
+     */
+    public function chargeStatusPayment(string $chargeId): ?Payment
+    {
+        $payments = $this->paymentsByChargeId($chargeId)->oldest('id')->get();
+
+        return $payments->first(fn (Payment $payment) => $payment->status == PaymentStatusEnum::PENDING)
+            ?? $payments->first(fn (Payment $payment) => $payment->status == PaymentStatusEnum::COMPLETED)
+            ?? $payments->first();
+    }
+
+    protected function paymentsByChargeId(string $chargeId): Builder
+    {
         return Payment::query()
             ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
-            ->where('charge_id', $chargeId)
-            ->where('status', PaymentStatusEnum::PENDING);
+            ->where('charge_id', $chargeId);
     }
 
     /**
