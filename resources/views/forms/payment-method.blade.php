@@ -10,27 +10,45 @@
     $isConnected = $sepayClient->isConnected();
 @endphp
 
-<x-core::card class="mb-3">
+<x-core::card
+    class="mb-3 payment-method-item"
+    data-payment-type="{{ $id }}"
+    data-sort-order="{{ setting('payment_' . $id . '_sort_order') }}"
+    data-status="{{ $status ? 1 : 0 }}"
+>
     <x-core::table :hover="false" :striped="false">
         <x-core::table.body>
-            <x-core::table.body.row>
-                <x-core::table.body.cell class="border-end" style="width: 5%">
-                    <x-core::icon name="ti ti-wallet" />
-                </x-core::table.body.cell>
-                <x-core::table.body.cell style="width: 20%">
-                    <img src="{{ $logo }}" alt="{{ $name }}" style="width: 8rem">
-                </x-core::table.body.cell>
-                <x-core::table.body.cell>
-                    @if($url)
-                        <a href="{{ $url }}" target="_blank">{{ $name }}</a>
-                    @else
-                        {{ $name }}
-                    @endif
-                    @if($description)
-                        <p class="mb-0">{{ $description }}</p>
-                    @endif
-                </x-core::table.body.cell>
-            </x-core::table.body.row>
+            {{-- Resolved at runtime: payment plugins older than the sortable list don't ship this component. --}}
+            @if (view()->exists('plugins/payment::components.settings-card-header'))
+                <x-dynamic-component
+                    component="plugins-payment::settings-card-header"
+                    :name="$name"
+                    :url="$url"
+                    :logo="$logo"
+                    :description="$description"
+                    :status="(bool) $status"
+                    :is-default="\Botble\Payment\Supports\PaymentHelper::defaultPaymentMethod() === $id"
+                />
+            @else
+                <x-core::table.body.row>
+                    <x-core::table.body.cell class="border-end" style="width: 5%">
+                        <x-core::icon name="ti ti-wallet" />
+                    </x-core::table.body.cell>
+                    <x-core::table.body.cell style="width: 20%">
+                        <img src="{{ $logo }}" alt="{{ $name }}" style="width: 8rem">
+                    </x-core::table.body.cell>
+                    <x-core::table.body.cell>
+                        @if($url)
+                            <a href="{{ $url }}" target="_blank">{{ $name }}</a>
+                        @else
+                            {{ $name }}
+                        @endif
+                        @if($description)
+                            <p class="mb-0">{{ $description }}</p>
+                        @endif
+                    </x-core::table.body.cell>
+                </x-core::table.body.row>
+            @endif
             <x-core::table.body.row>
                 <x-core::table.body.cell colspan="3">
                     <div class="d-flex justify-content-between align-items-center">
