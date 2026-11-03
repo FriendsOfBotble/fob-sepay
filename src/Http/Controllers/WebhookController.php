@@ -5,6 +5,7 @@ namespace FriendsOfBotble\SePay\Http\Controllers;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
 use FriendsOfBotble\SePay\Http\Requests\WebhookRequest;
+use FriendsOfBotble\SePay\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,12 @@ class WebhookController
      */
     protected const AMOUNT_TOLERANCE = 1000;
 
-    public function __invoke(WebhookRequest $request): JsonResponse
+    /**
+     * Relative tolerance for amounts converted from another currency, matching core's underpayment check.
+     */
+    protected const CONVERTED_AMOUNT_TOLERANCE_RATE = 0.01;
+
+    public function __invoke(WebhookRequest $request, PaymentService $paymentService): JsonResponse
     {
         do_action('payment_before_making_api_request', SEPAY_PAYMENT_METHOD_NAME, []);
 
@@ -49,7 +55,14 @@ class WebhookController
             ], 400);
         }
 
-        $expectedAmount = $this->expectedAmountInVnd($payment);
+        $pendingPayments = $paymentService->pendingPaymentsByChargeId((string) $payment->charge_id)->get();
+
+        // Already processed (SePay retries webhooks).
+        if ($pendingPayments->isEmpty()) {
+            return response()->json(['success' => true]);
+        }
+
+        $expectedAmount = $paymentService->totalInVnd($pendingPayments);
 
         if ($expectedAmount === null) {
             return response()->json([
@@ -58,62 +71,54 @@ class WebhookController
             ], 400);
         }
 
-        if ($transferAmount < ($expectedAmount - static::AMOUNT_TOLERANCE)) {
+        // A converted amount moves with the exchange rate between showing the QR and the transfer.
+        $tolerance = $paymentService->hasConvertedAmount($pendingPayments)
+            ? max(static::AMOUNT_TOLERANCE, $expectedAmount * static::CONVERTED_AMOUNT_TOLERANCE_RATE)
+            : static::AMOUNT_TOLERANCE;
+
+        if ($transferAmount < ($expectedAmount - $tolerance)) {
             return response()->json([
                 'success' => false,
                 'message' => 'insufficient amount.',
             ], 400);
         }
 
-        // SePay retries webhooks, so lock the row to make sure the payment is only processed once.
-        $processed = DB::transaction(function () use ($payment, $request): bool {
-            $payment = Payment::query()->lockForUpdate()->find($payment->getKey());
+        // Lock by primary key: charge_id isn't indexed, so a locking read on it would lock the whole table.
+        $completedPayments = DB::transaction(function () use ($pendingPayments, $request) {
+            $lockedPayments = Payment::query()
+                ->whereKey($pendingPayments->modelKeys())
+                ->lockForUpdate()
+                ->get()
+                ->filter(fn (Payment $item) => $item->status == PaymentStatusEnum::PENDING);
 
-            if (! $payment || $payment->status == PaymentStatusEnum::COMPLETED) {
-                return false;
+            foreach ($lockedPayments as $lockedPayment) {
+                $lockedPayment->update([
+                    'status' => PaymentStatusEnum::COMPLETED,
+                    'metadata' => $request->input(),
+                ]);
             }
 
-            $payment->update([
-                'status' => PaymentStatusEnum::COMPLETED,
-                'metadata' => $request->input(),
-            ]);
-
-            return true;
+            return $lockedPayments;
         });
 
-        if (! $processed) {
+        if ($completedPayments->isEmpty()) {
             return response()->json(['success' => true]);
         }
 
+        // Core finalizes every order in a single call, as it does for other gateways on multi-vendor checkouts.
+        // Vendor subscription payments have no order, so order_id stays empty for their listener.
         do_action(PAYMENT_ACTION_PAYMENT_PROCESSED, [
             'charge_id' => $payment->charge_id,
-            'order_id' => $payment->order_id,
+            'order_id' => $completedPayments->pluck('order_id')->filter()->values()->all(),
             'customer_id' => $payment->customer_id,
             'customer_type' => $payment->customer_type,
             'payment_channel' => $payment->payment_channel?->getValue(),
             'status' => PaymentStatusEnum::COMPLETED,
-            'amount' => $payment->amount,
+            'amount' => $completedPayments->sum('amount'),
         ], $request);
 
         do_action('payment_after_api_response', SEPAY_PAYMENT_METHOD_NAME, [], $request->all());
 
         return response()->json(['success' => true]);
-    }
-
-    protected function expectedAmountInVnd(Payment $payment): ?float
-    {
-        if (strtoupper((string) $payment->currency) === 'VND') {
-            return (float) $payment->amount;
-        }
-
-        $vndCurrency = function_exists('get_all_currencies')
-            ? get_all_currencies()->firstWhere('title', 'VND')
-            : null;
-
-        if (! $vndCurrency || (float) $vndCurrency->exchange_rate <= 0) {
-            return null;
-        }
-
-        return round($payment->amount * $vndCurrency->exchange_rate);
     }
 }

@@ -2,7 +2,10 @@
 
 namespace FriendsOfBotble\SePay\Services;
 
+use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class PaymentService
@@ -23,5 +26,71 @@ class PaymentService
         );
 
         return $chargeId;
+    }
+
+    /**
+     * A multi-vendor checkout stores one payment per order under the same charge ID,
+     * but the customer makes a single transfer for all of them. Rows that are no longer
+     * pending (e.g. the order was cancelled) are not part of that transfer.
+     */
+    public function pendingPaymentsByChargeId(string $chargeId): Builder
+    {
+        return Payment::query()
+            ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
+            ->where('charge_id', $chargeId)
+            ->where('status', PaymentStatusEnum::PENDING);
+    }
+
+    /**
+     * Ecommerce stores order payments in the default currency even when the customer pays
+     * in another one (and vendor subscriptions in the visitor's), so each row is converted
+     * from its own currency. Returns null when the total can't be expressed in VND.
+     */
+    public function totalInVnd(Collection $payments): ?float
+    {
+        $total = 0.0;
+
+        foreach ($payments as $payment) {
+            $amount = $this->convertToVnd((float) $payment->amount, (string) $payment->currency);
+
+            if ($amount === null) {
+                return null;
+            }
+
+            $total += $amount;
+        }
+
+        return $total > 0 ? round($total) : null;
+    }
+
+    public function hasConvertedAmount(Collection $payments): bool
+    {
+        return $payments->contains(fn (Payment $payment) => strtoupper((string) $payment->currency) !== 'VND');
+    }
+
+    protected function convertToVnd(float $amount, string $currency): ?float
+    {
+        if (strtoupper($currency) === 'VND') {
+            return $amount;
+        }
+
+        if (! function_exists('get_all_currencies')) {
+            return null;
+        }
+
+        $currencies = get_all_currencies();
+        $findCurrency = fn (string $title) => $currencies->first(
+            fn ($item) => strtoupper((string) $item->title) === strtoupper($title)
+        );
+
+        $from = $findCurrency($currency);
+        $vnd = $findCurrency('VND');
+
+        if (! $from || ! $vnd || (float) $from->exchange_rate <= 0 || (float) $vnd->exchange_rate <= 0) {
+            return null;
+        }
+
+        // Exchange rates are relative to the default currency.
+        return $amount / (float) $from->exchange_rate * (float) $vnd->exchange_rate;
     }
 }

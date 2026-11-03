@@ -142,8 +142,15 @@ class HookServiceProvider extends ServiceProvider
                     return $html;
                 }
 
-                $orderAmount = $this->calculateOrderAmount($orders);
-                $qrCodeUrl = $this->bankService->getQrCodeUrl($bankInfo['bankAccountNumber'], $bankInfo['bankShortName'], $orderAmount, $payment->charge_id);
+                $orderAmount = $this->paymentService->totalInVnd(
+                    $this->paymentService->pendingPaymentsByChargeId((string) $payment->charge_id)->get()
+                );
+
+                if ($orderAmount === null) {
+                    return $html;
+                }
+
+                $qrCodeUrl =$this->bankService->getQrCodeUrl($bankInfo['bankAccountNumber'], $bankInfo['bankShortName'], $orderAmount, $payment->charge_id);
 
                 $html .= view('plugins/fob-sepay::bank-info', [
                     'orderAmount' => $orderAmount,
@@ -192,14 +199,7 @@ class HookServiceProvider extends ServiceProvider
 
     protected function isValidPayment($payment): bool
     {
-        return $payment
-            && $payment->payment_channel == SEPAY_PAYMENT_METHOD_NAME
-            && $payment->currency === 'VND';
-    }
-
-    protected function calculateOrderAmount(Collection $orders): float
-    {
-        return $orders->sum('amount');
+        return $payment && $payment->payment_channel == SEPAY_PAYMENT_METHOD_NAME;
     }
 
     protected function getPaymentMethodRules(Request $request): array
