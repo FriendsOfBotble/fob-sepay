@@ -2,6 +2,12 @@
 
 Tất cả thay đổi của `fob-sepay` sẽ được mô tả trong file này
 
+## 2.1.2 - 2026-11-03
+
+- Sửa lỗi: Trang thanh toán QR chờ mãi "Đang chờ thanh toán" khi đơn hàng đầu tiên trong giỏ nhiều cửa hàng bị hủy, dù các đơn còn lại đã thanh toán
+- Sửa lỗi: Ẩn mã QR khi đơn hàng đầu tiên bị hủy trong khi các đơn khác vẫn chờ thanh toán
+- Webhook báo lỗi (thay vì bỏ qua) khi khách chuyển khoản cho đơn hàng đã hủy toàn bộ, để quản trị viên kiểm tra lại giao dịch
+
 ## 2.1.1 - 2026-11-03
 
 - Sửa lỗi: Không kéo thả được SePay trong trang Phương thức thanh toán, SePay luôn nằm cuối danh sách khi thanh toán
