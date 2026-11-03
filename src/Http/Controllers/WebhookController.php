@@ -57,9 +57,17 @@ class WebhookController
 
         $pendingPayments = $paymentService->pendingPaymentsByChargeId((string) $payment->charge_id)->get();
 
-        // Already processed (SePay retries webhooks).
         if ($pendingPayments->isEmpty()) {
-            return response()->json(['success' => true]);
+            // Already processed: SePay retries webhooks.
+            if ($paymentService->chargeStatusPayment((string) $payment->charge_id)?->status == PaymentStatusEnum::COMPLETED) {
+                return response()->json(['success' => true]);
+            }
+
+            // Every order of this charge was cancelled or failed: report it so the transfer can be reviewed.
+            return response()->json([
+                'success' => false,
+                'message' => 'payment is not pending.',
+            ], 400);
         }
 
         $expectedAmount = $paymentService->totalInVnd($pendingPayments);
