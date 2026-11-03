@@ -2,6 +2,15 @@
 
 Tất cả thay đổi của `fob-sepay` sẽ được mô tả trong file này
 
+## 2.1.1 - 2026-11-03
+
+- Sửa lỗi: Không kéo thả được SePay trong trang Phương thức thanh toán, SePay luôn nằm cuối danh sách khi thanh toán
+- Sửa lỗi: Không hiển thị mã QR khi tiền tệ mặc định của cửa hàng không phải VND (số tiền được quy đổi sang VND)
+- Sửa lỗi: Mã QR chỉ tính số tiền của đơn hàng đầu tiên khi giỏ hàng có sản phẩm của nhiều cửa hàng (marketplace)
+- Sửa lỗi: Webhook chỉ xác nhận thanh toán cho một đơn hàng khi khách thanh toán nhiều đơn của nhiều cửa hàng cùng lúc
+- Webhook bỏ qua thanh toán đã hủy, không xác nhận lại đơn hàng đã hủy
+- Webhook chấp nhận chênh lệch 1% khi số tiền được quy đổi từ tiền tệ khác do tỷ giá thay đổi
+
 ## 2.1.0 - 2026-10-21
 
 - Bảo mật: Chuyển route kết nối/ngắt kết nối OAuth vào khu vực admin (yêu cầu quyền `payments.settings`); trước đây khách truy cập có thể ngắt kết nối SePay của cửa hàng
