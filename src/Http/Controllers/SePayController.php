@@ -4,9 +4,9 @@ namespace FriendsOfBotble\SePay\Http\Controllers;
 
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
-use Botble\Payment\Models\Payment;
 use Exception;
 use FriendsOfBotble\SePay\SePayClient;
+use FriendsOfBotble\SePay\Services\PaymentService;
 use Illuminate\Http\Request;
 
 class SePayController extends BaseController
@@ -54,17 +54,14 @@ class SePayController extends BaseController
         }
     }
 
-    public function checkTransaction(Request $request): BaseHttpResponse
+    public function checkTransaction(Request $request, PaymentService $paymentService): BaseHttpResponse
     {
         try {
             $request->validate([
                 'charge_id' => ['required', 'string'],
             ]);
 
-            $payment = Payment::query()
-                ->where('payment_channel', SEPAY_PAYMENT_METHOD_NAME)
-                ->where('charge_id', $request->input('charge_id'))
-                ->first();
+            $payment = $paymentService->chargeStatusPayment((string) $request->input('charge_id'));
 
             if (! $payment) {
                 return $this
